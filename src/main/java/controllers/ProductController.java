@@ -12,6 +12,9 @@ import ninja.Result;
 import ninja.Results;
 import ninja.params.PathParam;
 
+import java.util.ArrayList;
+import java.util.Map;
+
 /**
  * Created by yakov_000 on 26.06.2014.
  */
@@ -33,7 +36,13 @@ public class ProductController {
             return Results.json().render("error","category with specified name was not found");
         }
 
-        return Results.json().render("data",productDao.listByCategory(category));
+        final ArrayList<Map<String,Object>> result = new ArrayList<>();
+
+        for(Product product:productDao.listByCategory(category)) {
+            result.add(product.toMap());
+        }
+
+        return Results.json().render("data",result);
     }
 
     public Result product(@PathParam("id")Long id) {
@@ -41,7 +50,7 @@ public class ProductController {
         Product product = productDao.get(id);
 
         if(product!=null)
-            return Results.json().render(product);
+            return Results.json().render(product.toMap());
         else
             return Results.json().render("error","product with specified id was not found");
     }

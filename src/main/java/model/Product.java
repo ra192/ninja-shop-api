@@ -1,8 +1,8 @@
 package model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import javax.persistence.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -55,7 +55,6 @@ public class Product {
         this.price = price;
     }
 
-    @JsonIgnore
     @ManyToOne
     public Category getCategory() {
         return category;
@@ -81,7 +80,6 @@ public class Product {
         this.description = description;
     }
 
-    @JsonIgnore
     @ManyToMany
     public Set<PropertyValue> getPropertyValues() {
         return propertyValues;
@@ -97,5 +95,19 @@ public class Product {
 
     public void setRating(Float rating) {
         this.rating = rating;
+    }
+
+    public Map<String,Object>toMap() {
+
+        final Map<String, Object> result = new HashMap<>();
+
+        result.put("code",code);
+        result.put("displayName",displayName);
+        result.put("description",description);
+        result.put("imageUrl",imageUrl);
+        result.put("price",price);
+        result.put("rating",rating);
+
+        return result;
     }
 }

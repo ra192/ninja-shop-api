@@ -1,9 +1,7 @@
 package model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import javax.persistence.*;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by yakov_000 on 17.06.2014.
@@ -17,7 +15,6 @@ public class Category {
     private Set<Category>children;
     private Set<Property>properties;
 
-    @JsonIgnore
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     public Long getId() {
@@ -44,7 +41,6 @@ public class Category {
         this.displayName = displayName;
     }
 
-    @JsonIgnore
     @ManyToOne()
     public Category getParent() {
         return parent;
@@ -70,5 +66,23 @@ public class Category {
 
     public void setProperties(Set<Property> properties) {
         this.properties = properties;
+    }
+
+    public Map<String,Object> toMap() {
+
+        final Map<String, Object> result = new HashMap<>();
+
+        result.put("name",name);
+        result.put("displayName",displayName);
+
+        final List<Map<String,Object>> childrenMaps=new ArrayList<>();
+
+        for(Category child:children) {
+            childrenMaps.add(child.toMap());
+         }
+
+        result.put("children",childrenMaps);
+
+        return result;
     }
 }

@@ -2,6 +2,7 @@ package dto;
 
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+import model.Category;
 
 import java.util.List;
 
@@ -47,5 +48,8 @@ public class CategoryDto {
 
     public void setParent(String parent) {
         this.parent = parent;
+    }
+
+    public CategoryDto() {
     }
 }

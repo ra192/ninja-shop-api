@@ -47,6 +47,7 @@ public class Category {
     }
 
     @OneToMany(mappedBy = "parent")
+    @OrderBy("displayName ASC")
     public Set<Category> getChildren() {
         return children;
     }

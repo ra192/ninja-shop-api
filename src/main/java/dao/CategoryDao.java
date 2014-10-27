@@ -46,6 +46,8 @@ public class CategoryDao extends BaseDao<Category> {
         Root<Category> categoryRoot = criteriaQuery.from(entityClass);
         criteriaQuery.where(criteriaBuilder.isNull(categoryRoot.get("parent")));
 
+        criteriaQuery.orderBy(criteriaBuilder.asc(categoryRoot.get("displayName")));
+
         return entityManager.createQuery(criteriaQuery).getResultList();
     }
 

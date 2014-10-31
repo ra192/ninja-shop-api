@@ -2,7 +2,10 @@ package dto;
 
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+import model.Property;
+import model.PropertyValue;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -16,6 +19,16 @@ public class PropertyDto {
     @JacksonXmlElementWrapper(localName = "propertyValues")
     @JacksonXmlProperty(localName = "propertyValue")
     List<PropertyValueDto> propertyValues;
+
+    public PropertyDto() {
+
+    }
+
+    public PropertyDto(Property property) {
+        name=property.getName();
+        displayName=property.getDisplayName();
+        propertyValues=new ArrayList<>();
+    }
 
     public List<PropertyValueDto> getPropertyValues() {
         return propertyValues;

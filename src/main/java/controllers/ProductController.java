@@ -27,6 +27,11 @@ import java.util.Map;
 
 class PropertyValueWithCount extends PropertyValueDto {
     public Long count;
+
+    PropertyValueWithCount(PropertyValue propertyValue,Long count) {
+        super(propertyValue);
+        this.count=count;
+    }
 }
 
 @Singleton
@@ -82,24 +87,18 @@ public class ProductController {
             Object[] itemArr= (Object[]) item;
             final PropertyValue propertyValue = (PropertyValue) itemArr[0];
 
-            final PropertyValueDto propertyValueDto = new PropertyValueDto();
-            propertyValueDto.setName(propertyValue.getName());
-            propertyValueDto.setDisplayName(propertyValue.getDisplayName());
+            final PropertyValueWithCount propertyValueWithCount = new PropertyValueWithCount(propertyValue,(Long)itemArr[1]);
 
             PropertyDto propertyDto;
 
             if(result.size()<1 || !result.get(result.size()-1).getName().equals(propertyValue.getProperty().getName())) {
-               propertyDto=new PropertyDto();
-               propertyDto.setName(propertyValue.getProperty().getName());
-               propertyDto.setDisplayName(propertyValue.getProperty().getDisplayName());
-               propertyDto.setPropertyValues(new ArrayList<PropertyValueDto>());
-
+               propertyDto=new PropertyDto(propertyValue.getProperty());
                result.add(propertyDto);
             } else {
                 propertyDto=result.get(result.size()-1);
             }
 
-            propertyDto.getPropertyValues().add(propertyValueDto);
+            propertyDto.getPropertyValues().add(propertyValueWithCount);
         }
 
         return Results.json().render("data",result);

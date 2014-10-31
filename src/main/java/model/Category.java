@@ -69,21 +69,4 @@ public class Category {
         this.properties = properties;
     }
 
-    public Map<String,Object> toMap() {
-
-        final Map<String, Object> result = new HashMap<>();
-
-        result.put("name",name);
-        result.put("displayName",displayName);
-
-        final List<Map<String,Object>> childrenMaps=new ArrayList<>();
-
-        for(Category child:children) {
-            childrenMaps.add(child.toMap());
-         }
-
-        result.put("children",childrenMaps);
-
-        return result;
-    }
 }

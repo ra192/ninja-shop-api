@@ -83,7 +83,7 @@ public class ToolsController {
                 }
             }
 
-            for (CategoryDto categoryDto : dataDto.getCategories()) {
+            for (CategoryWithParentAndPropertiesDto categoryDto : dataDto.getCategories()) {
                 String categoryName = categoryDto.getName().trim();
                 if (categoryDao.getByName(categoryName) == null) {
                     Category category = new Category();

@@ -6,7 +6,7 @@ import dao.CategoryDao;
 import dao.ProductDao;
 import dto.ProductDto;
 import dto.PropertyDto;
-import dto.PropertyValueDto;
+import dto.PropertyValueWithCountDto;
 import filters.CorsFilter;
 import model.Category;
 import model.Product;
@@ -19,20 +19,6 @@ import ninja.params.PathParam;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-
-/**
- * Created by yakov_000 on 26.06.2014.
- */
-
-class PropertyValueWithCount extends PropertyValueDto {
-    public Long count;
-
-    PropertyValueWithCount(PropertyValue propertyValue,Long count) {
-        super(propertyValue);
-        this.count=count;
-    }
-}
 
 @Singleton
 @FilterWith(CorsFilter.class)
@@ -87,7 +73,7 @@ public class ProductController {
             Object[] itemArr= (Object[]) item;
             final PropertyValue propertyValue = (PropertyValue) itemArr[0];
 
-            final PropertyValueWithCount propertyValueWithCount = new PropertyValueWithCount(propertyValue,(Long)itemArr[1]);
+            final PropertyValueWithCountDto propertyValueWithCount = new PropertyValueWithCountDto(propertyValue,(Long)itemArr[1]);
 
             PropertyDto propertyDto;
 

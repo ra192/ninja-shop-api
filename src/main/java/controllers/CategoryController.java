@@ -3,6 +3,7 @@ package controllers;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import dao.CategoryDao;
+import dto.CategoryWithChildrenDto;
 import filters.CorsFilter;
 import model.Category;
 import ninja.FilterWith;
@@ -28,10 +29,10 @@ public class CategoryController {
     @UnitOfWork
     public Result categories() {
 
-        final List<Map<String, Object>> result = new ArrayList<>();
+        final List<CategoryWithChildrenDto> result = new ArrayList<>();
 
         for(Category category:categoryDao.listRoots()) {
-            result.add(category.toMap());
+            result.add(new CategoryWithChildrenDto(category));
         }
 
         return Results.json().render("data", result);

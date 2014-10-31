@@ -21,7 +21,7 @@ public class DataDto {
 
     @JacksonXmlElementWrapper(localName = "categories")
     @JacksonXmlProperty(localName = "category")
-    List<CategoryDto> categories;
+    List<CategoryWithParentAndPropertiesDto> categories;
 
     @JacksonXmlElementWrapper(localName = "products")
     @JacksonXmlProperty(localName = "product")
@@ -35,11 +35,11 @@ public class DataDto {
         this.products = products;
     }
 
-    public List<CategoryDto> getCategories() {
+    public List<CategoryWithParentAndPropertiesDto> getCategories() {
         return categories;
     }
 
-    public void setCategories(List<CategoryDto> categories) {
+    public void setCategories(List<CategoryWithParentAndPropertiesDto> categories) {
         this.categories = categories;
     }
 

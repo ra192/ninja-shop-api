@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import dao.CategoryDao;
 import dao.ProductDao;
+import dto.ProductDto;
 import dto.PropertyDto;
 import dto.PropertyValueDto;
 import filters.CorsFilter;
@@ -13,6 +14,7 @@ import model.PropertyValue;
 import ninja.FilterWith;
 import ninja.Result;
 import ninja.Results;
+import ninja.jpa.UnitOfWork;
 import ninja.params.PathParam;
 
 import java.util.ArrayList;
@@ -22,6 +24,10 @@ import java.util.Map;
 /**
  * Created by yakov_000 on 26.06.2014.
  */
+
+class PropertyValueWithCount extends PropertyValueDto {
+    public Long count;
+}
 
 @Singleton
 @FilterWith(CorsFilter.class)
@@ -33,6 +39,7 @@ public class ProductController {
     @Inject
     CategoryDao categoryDao;
 
+    @UnitOfWork
     public Result products(@PathParam("categoryName")String categoryName) {
 
         Category category = categoryDao.getByName(categoryName);
@@ -41,21 +48,22 @@ public class ProductController {
             return Results.json().render("error","category with specified name was not found");
         }
 
-        final ArrayList<Map<String,Object>> result = new ArrayList<>();
+        final List<ProductDto> result = new ArrayList<>();
 
         for(Product product:productDao.listByCategory(category)) {
-            result.add(product.toMap());
+            result.add(new ProductDto(product));
         }
 
         return Results.json().render("data",result);
     }
 
+    @UnitOfWork
     public Result product(@PathParam("id")Long id) {
 
         Product product = productDao.get(id);
 
         if(product!=null)
-            return Results.json().render(product.toMap());
+            return Results.json().render(new ProductDto(product));
         else
             return Results.json().render("error","product with specified id was not found");
     }

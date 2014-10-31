@@ -96,18 +96,4 @@ public class Product {
     public void setRating(Float rating) {
         this.rating = rating;
     }
-
-    public Map<String,Object>toMap() {
-
-        final Map<String, Object> result = new HashMap<>();
-
-        result.put("code",code);
-        result.put("displayName",displayName);
-        result.put("description",description);
-        result.put("imageUrl",imageUrl);
-        result.put("price",price);
-        result.put("rating",rating);
-
-        return result;
-    }
 }

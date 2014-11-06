@@ -24,6 +24,10 @@ import java.util.List;
 @FilterWith(CorsFilter.class)
 public class ProductController {
 
+    public static class PropertiesFilter {
+        public List<List<String>>propertyValues;
+    }
+
     @Inject
     ProductDao productDao;
 
@@ -59,7 +63,7 @@ public class ProductController {
             return Results.json().render("error","product with specified id was not found");
     }
 
-    public Result properties(@PathParam("categoryName") String categoryName) {
+    public Result properties(@PathParam("categoryName")String categoryName,PropertiesFilter propertiesFilter) {
 
         Category category = categoryDao.getByName(categoryName);
 
@@ -69,7 +73,7 @@ public class ProductController {
 
         final List<PropertyDto> result = new ArrayList<>();
 
-        for(Object item:productDao.listPropertyValuesByCategory(category)) {
+        for(Object item:productDao.listPropertyValuesByCategory(category,propertiesFilter.propertyValues)) {
             Object[] itemArr= (Object[]) item;
             final PropertyValue propertyValue = (PropertyValue) itemArr[0];
 

@@ -17,14 +17,11 @@
 package conf;
 
 
-import controllers.CategoryController;
-import controllers.ProductController;
-import controllers.ToolsController;
+import controllers.*;
 import ninja.AssetsController;
 import ninja.Results;
 import ninja.Router;
 import ninja.application.ApplicationRoutes;
-import controllers.ApplicationController;
 
 public class Routes implements ApplicationRoutes {
 
@@ -36,11 +33,11 @@ public class Routes implements ApplicationRoutes {
 
         router.GET().route("/products/{categoryName}.json").with(ProductController.class,"products");
         router.GET().route("/product/{id}.json").with(ProductController.class,"product");
-        router.GET().route("/productsProperties/{categoryName}.json").with(ProductController.class,"properties");
+
+        router.POST().route("/productsProperties/{categoryName}.json").with(ProductController.class,"properties");
 
         router.GET().route("/categories.json").with(CategoryController.class,"categories");
 
-        router.OPTIONS().route("/tools/import.json").with(Results.json().render("options").addHeader("Access-Control-Allow-Origin","*"));
         router.POST().route("/tools/import.json").with(ToolsController.class,"importData");
  
         ///////////////////////////////////////////////////////////////////////
@@ -53,6 +50,7 @@ public class Routes implements ApplicationRoutes {
         // Index / Catchall shows index page
         ///////////////////////////////////////////////////////////////////////
         router.GET().route("/.*").with(ApplicationController.class, "index");
+        router.OPTIONS().route("/.*").with(OptionsRequestController.class,"options");
     }
 
 }

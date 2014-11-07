@@ -7,7 +7,7 @@ import dao.ProductDao;
 import dao.PropertyDao;
 import dto.ProductDto;
 import dto.PropertyDto;
-import dto.PropertyValueWithCountDto;
+import dto.PropertyValueDto;
 import filters.CorsFilter;
 import model.Category;
 import model.Product;
@@ -21,6 +21,8 @@ import ninja.params.PathParam;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 @Singleton
 @FilterWith(CorsFilter.class)
@@ -30,13 +32,27 @@ public class ProductController {
         public List<List<String>> propertyValues;
     }
 
-    public static class PropertiesResult {
-        public List<PropertyDto> properties;
-        public List<PropertyDto> addProperties;
+    public static class PropertyResultItem extends PropertyDto implements Comparable<PropertyResultItem> {
 
-        public PropertiesResult(List<PropertyDto> properties, List<PropertyDto> addProperties) {
-            this.properties = properties;
-            this.addProperties = addProperties;
+        public Boolean isAdditional;
+
+        public PropertyResultItem(Property property, Boolean isAdditional) {
+            super(property);
+            this.isAdditional = isAdditional;
+        }
+
+        @Override
+        public int compareTo(PropertyResultItem o) {
+            return getDisplayName().compareTo(o.getDisplayName());
+        }
+    }
+
+    public static class PropertyValueResultItem extends PropertyValueDto {
+        public Long count;
+
+        public PropertyValueResultItem(PropertyValue propertyValue, Long count) {
+            super(propertyValue);
+            this.count=count;
         }
     }
 
@@ -87,11 +103,14 @@ public class ProductController {
             return Results.json().render("error", "category with specified name was not found");
         }
 
+        SortedSet<PropertyDto> sortedResult=new TreeSet<>();
+
         // get property values count for specified filter
-        final List<PropertyDto> propertyValues = getPropertyValuesCount(category, null, propertiesFilter.propertyValues, null);
+        final List<PropertyResultItem> propertyValues = getPropertyValuesCount(category, null, propertiesFilter.propertyValues, null, false);
+
+        sortedResult.addAll(propertyValues);
 
         // get additional property values count excluding property items from filter
-        List<PropertyDto> addPropertyValues = new ArrayList<>();
         if(propertiesFilter.propertyValues!=null) {
             for (int i = 0; i < propertiesFilter.propertyValues.size(); i++) {
 
@@ -102,34 +121,34 @@ public class ProductController {
                     subFilter.addAll(propertiesFilter.propertyValues.subList(0, i));
                     subFilter.addAll(propertiesFilter.propertyValues.subList(i + 1, propertiesFilter.propertyValues.size()));
 
-                    final PropertyDto addPropertyValuesItem = getPropertyValuesCount(category, property, subFilter, propertiesFilter.propertyValues.get(i)).get(0);
-                    addPropertyValues.add(addPropertyValuesItem);
+                    final PropertyResultItem addPropertyValuesItem = getPropertyValuesCount(category, property, subFilter, propertiesFilter.propertyValues.get(i), true).get(0);
+                    sortedResult.add(addPropertyValuesItem);
                 }
             }
         }
 
-        return Results.json().render(new PropertiesResult(propertyValues,addPropertyValues));
+        return Results.json().render("data",sortedResult);
     }
 
-    private List<PropertyDto> getPropertyValuesCount(Category category, Property property, List<List<String>> propertiesFilter, List<String> excludedProperties) {
-        final List<PropertyDto> result = new ArrayList<>();
+    private List<PropertyResultItem> getPropertyValuesCount(Category category, Property property, List<List<String>> propertiesFilter, List<String> excludedProperties, Boolean isAdditional) {
+        final List<PropertyResultItem> result = new ArrayList<>();
 
         for (Object item : productDao.countPropertyValuesByCategory(category, property, propertiesFilter, excludedProperties)) {
             Object[] itemArr = (Object[]) item;
             final PropertyValue propertyValue = (PropertyValue) itemArr[0];
 
-            final PropertyValueWithCountDto propertyValueWithCount = new PropertyValueWithCountDto(propertyValue, (Long) itemArr[1]);
+            final PropertyValueResultItem propertyValueWithCount = new PropertyValueResultItem(propertyValue, (Long) itemArr[1]);
 
-            PropertyDto propertyDto;
+            PropertyResultItem propertyResultItem;
 
             if (result.size() < 1 || !result.get(result.size() - 1).getName().equals(propertyValue.getProperty().getName())) {
-                propertyDto = new PropertyDto(propertyValue.getProperty());
-                result.add(propertyDto);
+                propertyResultItem = new PropertyResultItem(propertyValue.getProperty(),isAdditional);
+                result.add(propertyResultItem);
             } else {
-                propertyDto = result.get(result.size() - 1);
+                propertyResultItem = result.get(result.size() - 1);
             }
 
-            propertyDto.getPropertyValues().add(propertyValueWithCount);
+            propertyResultItem.getPropertyValues().add(propertyValueWithCount);
         }
 
         return result;

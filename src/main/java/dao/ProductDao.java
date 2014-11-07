@@ -53,44 +53,62 @@ public class ProductDao extends BaseDao<Product> {
     }
 
     @UnitOfWork
-    public List<Object> listPropertyValuesByCategory(Category category, List<List<String>> propertyValueNamesFilter) {
+    public List<Object> countPropertyValuesByCategory(Category category, Property property,
+                                                      List<List<String>> propertyValueNamesFilter,
+                                                      List<String> excludedPropertyValueNames) {
+
         EntityManager entityManager = entityManagerProvider.get();
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
 
         CriteriaQuery<Object> criteriaQuery = criteriaBuilder.createQuery();
         final Root<Product> productRoot = criteriaQuery.from(entityClass);
         final Join<Product, PropertyValue> propertyValues = productRoot.join("propertyValues");
-        final Join<PropertyValue, Property> property = propertyValues.join("property");
+        final Join<PropertyValue, Property> propertyRoot = propertyValues.join("property");
 
         final ArrayList<Predicate> andPredicates = new ArrayList<>();
+
+        //category filter
         andPredicates.add(criteriaBuilder.equal(productRoot.get("category"), category));
+
+        //property filter if specified
+        if (property != null)
+            andPredicates.add(criteriaBuilder.equal(propertyValues.get("property"), property));
+
+        final List<String> propertyValueNamesFlat = new ArrayList<>();
 
         if (propertyValueNamesFilter != null) {
             for (List<String> orItem : propertyValueNamesFilter) {
-                final List<Predicate> propertyValuesOrPredicateList = new ArrayList<>();
+                if(orItem.size()>0) {
 
-                final Subquery<Product> subquery = criteriaQuery.subquery(Product.class);
-                final Root<Product> productSubRoot = subquery.from(Product.class);
-                final Join<Product, PropertyValue> subPropertyValues = productSubRoot.join("propertyValues");
+                    final Subquery<Product> subquery = criteriaQuery.subquery(Product.class);
+                    final Root<Product> productSubRoot = subquery.from(Product.class);
+                    final Join<Product, PropertyValue> subPropertyValues = productSubRoot.join("propertyValues");
 
-                for (String propertyValueName : orItem) {
-                    propertyValuesOrPredicateList.add(criteriaBuilder.equal(subPropertyValues.get("name"), propertyValueName));
+                    propertyValueNamesFlat.addAll(orItem);
+
+                    subquery.where(criteriaBuilder.and(criteriaBuilder.equal(productRoot, productSubRoot),
+                            subPropertyValues.get("name").in(orItem)));
+
+                    subquery.select(productSubRoot);
+
+                    andPredicates.add(criteriaBuilder.exists(subquery));
                 }
-
-                subquery.where(criteriaBuilder.and(criteriaBuilder.equal(productRoot,productSubRoot),
-                        criteriaBuilder.or(propertyValuesOrPredicateList.toArray(new Predicate[propertyValuesOrPredicateList.size()]))));
-
-                subquery.select(productSubRoot);
-
-                andPredicates.add(criteriaBuilder.exists(subquery));
             }
         }
 
+        //add excluded property if specified
+        if (excludedPropertyValueNames != null && excludedPropertyValueNames.size() > 0)
+            propertyValueNamesFlat.addAll(excludedPropertyValueNames);
+
+        if (propertyValueNamesFlat.size() > 0)
+            //exclude specified properties filter
+            andPredicates.add(propertyValues.get("name").in(propertyValueNamesFlat).not());
+
         criteriaQuery.where(andPredicates.toArray(new Predicate[andPredicates.size()]));
 
-        criteriaQuery.groupBy(property, propertyValues);
+        criteriaQuery.groupBy(propertyRoot, propertyValues);
 
-        criteriaQuery.orderBy(criteriaBuilder.asc(property.get("displayName")), criteriaBuilder.asc(propertyValues.get("displayName")));
+        criteriaQuery.orderBy(criteriaBuilder.asc(propertyRoot.get("displayName")), criteriaBuilder.asc(propertyValues.get("displayName")));
 
         criteriaQuery.multiselect(propertyValues, criteriaBuilder.count(productRoot));
 

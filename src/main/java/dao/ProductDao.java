@@ -12,6 +12,7 @@ import javax.persistence.NoResultException;
 import javax.persistence.criteria.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by yakov_000 on 17.06.2014.
@@ -54,8 +55,7 @@ public class ProductDao extends BaseDao<Product> {
 
     @UnitOfWork
     public List<Object> countPropertyValuesByCategory(Category category, Property property,
-                                                      List<List<String>> propertyValueNamesFilter,
-                                                      List<String> excludedPropertyValueNames) {
+                                                      Map<Property,List<PropertyValue>> propertyValueNamesFilter) {
 
         EntityManager entityManager = entityManagerProvider.get();
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
@@ -74,35 +74,35 @@ public class ProductDao extends BaseDao<Product> {
         if (property != null)
             andPredicates.add(criteriaBuilder.equal(propertyValues.get("property"), property));
 
-        final List<String> propertyValueNamesFlat = new ArrayList<>();
+        final List<PropertyValue> propertyValuesFlat = new ArrayList<>();
 
+        //property values filter excluding speicfied property
         if (propertyValueNamesFilter != null) {
-            for (List<String> orItem : propertyValueNamesFilter) {
-                if(orItem.size()>0) {
+            for (Map.Entry<Property, List<PropertyValue>> propertyValuesEntry : propertyValueNamesFilter.entrySet()) {
+                if(!propertyValuesEntry.getKey().equals(property) && propertyValuesEntry.getValue().size()>0) {
 
                     final Subquery<Product> subquery = criteriaQuery.subquery(Product.class);
                     final Root<Product> productSubRoot = subquery.from(Product.class);
                     final Join<Product, PropertyValue> subPropertyValues = productSubRoot.join("propertyValues");
 
-                    propertyValueNamesFlat.addAll(orItem);
+                    propertyValuesFlat.addAll(propertyValuesEntry.getValue());
 
                     subquery.where(criteriaBuilder.and(criteriaBuilder.equal(productRoot, productSubRoot),
-                            subPropertyValues.get("name").in(orItem)));
+                            subPropertyValues.in(propertyValuesEntry.getValue())));
 
                     subquery.select(productSubRoot);
 
                     andPredicates.add(criteriaBuilder.exists(subquery));
                 }
+
+                propertyValuesFlat.addAll(propertyValuesEntry.getValue());
             }
         }
 
-        //add excluded property if specified
-        if (excludedPropertyValueNames != null && excludedPropertyValueNames.size() > 0)
-            propertyValueNamesFlat.addAll(excludedPropertyValueNames);
-
-        if (propertyValueNamesFlat.size() > 0)
+        //add excluded property
+        if (propertyValuesFlat.size() > 0)
             //exclude specified properties filter
-            andPredicates.add(propertyValues.get("name").in(propertyValueNamesFlat).not());
+            andPredicates.add(propertyValues.in(propertyValuesFlat).not());
 
         criteriaQuery.where(andPredicates.toArray(new Predicate[andPredicates.size()]));
 

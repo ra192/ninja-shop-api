@@ -21,6 +21,9 @@ import ninja.params.PathParam;
 
 import java.util.*;
 
+class PropertyValueDoesntExist extends Throwable {
+}
+
 @Singleton
 @FilterWith(CorsFilter.class)
 public class ProductController {
@@ -29,18 +32,23 @@ public class ProductController {
         public List<String> propertyValues;
     }
 
-    public static class PropertyResultItem extends PropertyDto implements Comparable<PropertyResultItem> {
+    public static class PropertiesResult {
+        public Set<PropertyResultItem> data;
+        public List<PropertyDto> selectedProperties;
+
+        public PropertiesResult(Set<PropertyResultItem> data, List<PropertyDto> selectedProperties) {
+            this.data = data;
+            this.selectedProperties = selectedProperties;
+        }
+    }
+
+    public static class PropertyResultItem extends PropertyDto {
 
         public Boolean isAdditional;
 
         public PropertyResultItem(Property property, Boolean isAdditional) {
             super(property);
             this.isAdditional = isAdditional;
-        }
-
-        @Override
-        public int compareTo(PropertyResultItem o) {
-            return getDisplayName().compareTo(o.getDisplayName());
         }
     }
 
@@ -63,7 +71,7 @@ public class ProductController {
     PropertyDao propertyDao;
 
     @UnitOfWork
-    public Result products(@PathParam("categoryName") String categoryName) {
+    public Result products(@PathParam("categoryName") String categoryName,PropertiesFilter propertiesFilter) {
 
         Category category = categoryDao.getByName(categoryName);
 
@@ -71,9 +79,16 @@ public class ProductController {
             return Results.json().render("error", "category with specified name was not found");
         }
 
+        final Map<Property, Set<PropertyValue>> propertyValuesFilterMap;
+        try {
+            propertyValuesFilterMap = getPropertiesFilter(propertiesFilter.propertyValues);
+        } catch (PropertyValueDoesntExist propertyValueDoesntExist) {
+            return Results.json().render("error", "property value with specified name was not found");
+        }
+
         final List<ProductDto> result = new ArrayList<>();
 
-        for (Product product : productDao.listByCategory(category)) {
+        for (Product product : productDao.listByCategory(category,propertyValuesFilterMap)) {
             result.add(new ProductDto(product));
         }
 
@@ -100,26 +115,20 @@ public class ProductController {
             return Results.json().render("error", "category with specified name was not found");
         }
 
-        final Map<Property, List<PropertyValue>> propertyValuesFilterMap = new HashMap<>();
-
-        if (propertiesFilter.propertyValues != null) {
-            for (String propertyValueName : propertiesFilter.propertyValues) {
-                final PropertyValue propertyValue = propertyDao.getPropertyValueByName(propertyValueName);
-                if (propertyValue == null) {
-                    return Results.json().render("error", "property value with specified name was not found");
-                }
-
-                List<PropertyValue> propertyValues = propertyValuesFilterMap.get(propertyValue.getProperty());
-                if (propertyValues == null) {
-                    propertyValues = new ArrayList<>();
-                    propertyValuesFilterMap.put(propertyValue.getProperty(), propertyValues);
-                }
-
-                propertyValues.add(propertyValue);
-            }
+        final Map<Property, Set<PropertyValue>> propertyValuesFilterMap;
+        try {
+            propertyValuesFilterMap = getPropertiesFilter(propertiesFilter.propertyValues);
+        } catch (PropertyValueDoesntExist propertyValueDoesntExist) {
+            return Results.json().render("error", "property value with specified name was not found");
         }
 
-        SortedSet<PropertyDto> sortedResult = new TreeSet<>();
+
+        SortedSet<PropertyResultItem> sortedResult = new TreeSet<>(new Comparator<PropertyResultItem>() {
+            @Override
+            public int compare(PropertyResultItem o1, PropertyResultItem o2) {
+                return o1.getDisplayName().compareTo(o2.getDisplayName());
+            }
+        });
 
         // get property values count for specified filter
         final List<PropertyResultItem> propertyValues = getPropertyValuesCount(category, null, propertyValuesFilterMap, false);
@@ -127,7 +136,7 @@ public class ProductController {
         sortedResult.addAll(propertyValues);
 
         // get additional property values count excluding property items from filter
-        for (Map.Entry<Property,List<PropertyValue>> propertyValueEntry:propertyValuesFilterMap.entrySet()) {
+        for (Map.Entry<Property,Set<PropertyValue>> propertyValueEntry:propertyValuesFilterMap.entrySet()) {
 
             if (propertyValueEntry.getValue().size() > 0) {
                 final PropertyResultItem addPropertyValuesItem = getPropertyValuesCount(category, propertyValueEntry.getKey(), propertyValuesFilterMap, true).get(0);
@@ -135,10 +144,12 @@ public class ProductController {
             }
         }
 
-        return Results.json().render("data", sortedResult);
+        final List<PropertyDto> selectedProperties = getSelectedProperties(propertyValuesFilterMap);
+
+        return Results.json().render(new PropertiesResult(sortedResult,selectedProperties));
     }
 
-    private List<PropertyResultItem> getPropertyValuesCount(Category category, Property property, Map<Property, List<PropertyValue>> propertiesFilter, Boolean isAdditional) {
+    private List<PropertyResultItem> getPropertyValuesCount(Category category, Property property, Map<Property, Set<PropertyValue>> propertiesFilter, Boolean isAdditional) {
         final List<PropertyResultItem> result = new ArrayList<>();
 
         for (Object item : productDao.countPropertyValuesByCategory(category, property, propertiesFilter)) {
@@ -157,6 +168,53 @@ public class ProductController {
             }
 
             propertyResultItem.getPropertyValues().add(propertyValueWithCount);
+        }
+
+        return result;
+    }
+
+    private Map<Property,Set<PropertyValue>> getPropertiesFilter(List<String>propertyValueNames) throws PropertyValueDoesntExist {
+        final Map<Property, Set<PropertyValue>> result = new TreeMap<>(new Comparator<Property>() {
+            @Override
+            public int compare(Property o1, Property o2) {
+                return o1.getDisplayName().compareTo(o2.getDisplayName());
+            }
+        });
+
+        if (propertyValueNames != null) {
+            for (String propertyValueName : propertyValueNames) {
+                final PropertyValue propertyValue = propertyDao.getPropertyValueByName(propertyValueName);
+                if (propertyValue == null) {
+                    throw new PropertyValueDoesntExist();
+                }
+
+                Set<PropertyValue> propertyValues = result.get(propertyValue.getProperty());
+                if (propertyValues == null) {
+                    propertyValues = new TreeSet<>(new Comparator<PropertyValue>() {
+                        @Override
+                        public int compare(PropertyValue o1, PropertyValue o2) {
+                            return o1.getDisplayName().compareTo(o2.getDisplayName());
+                        }
+                    });
+                    result.put(propertyValue.getProperty(), propertyValues);
+                }
+
+                propertyValues.add(propertyValue);
+            }
+        }
+
+        return result;
+    }
+
+    private List<PropertyDto> getSelectedProperties(Map<Property, Set<PropertyValue>> propertiesFilter) {
+        final List<PropertyDto> result=new ArrayList<>();
+
+        for(Map.Entry<Property,Set<PropertyValue>> propertiesFilterEntry:propertiesFilter.entrySet()) {
+            final PropertyDto propertyDto = new PropertyDto(propertiesFilterEntry.getKey());
+            for(PropertyValue propertyValue:propertiesFilterEntry.getValue()) {
+                propertyDto.getPropertyValues().add(new PropertyValueDto(propertyValue));
+            }
+            result.add(propertyDto);
         }
 
         return result;

@@ -13,6 +13,7 @@ import javax.persistence.criteria.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by yakov_000 on 17.06.2014.
@@ -42,20 +43,44 @@ public class ProductDao extends BaseDao<Product> {
     }
 
     @UnitOfWork
-    public List<Product> listByCategory(Category category) {
+    public List<Product> listByCategory(Category category, Map<Property, Set<PropertyValue>> propertyValuesFilter) {
         EntityManager entityManager = entityManagerProvider.get();
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
 
         CriteriaQuery<Product> criteriaQuery = criteriaBuilder.createQuery(entityClass);
-        Root<Product> propertyRoot = criteriaQuery.from(entityClass);
-        criteriaQuery.where(criteriaBuilder.equal(propertyRoot.get("category"), category));
+        Root<Product> productRoot = criteriaQuery.from(entityClass);
+
+        final List<Predicate> andPredicates = new ArrayList<>();
+
+        //category filter
+        andPredicates.add(criteriaBuilder.equal(productRoot.get("category"), category));
+
+        //property values filter if specified
+        if (propertyValuesFilter != null && !propertyValuesFilter.isEmpty()) {
+            for (Map.Entry<Property, Set<PropertyValue>> propertyValuesEntry : propertyValuesFilter.entrySet()) {
+                if (propertyValuesEntry.getValue().size() > 0) {
+                    final Subquery<Product> subquery = criteriaQuery.subquery(Product.class);
+                    final Root<Product> productSubRoot = subquery.from(Product.class);
+                    final Join<Product, PropertyValue> propertyValues = productSubRoot.join("propertyValues");
+
+                    subquery.where(criteriaBuilder.and(criteriaBuilder.equal(productRoot, productSubRoot)),
+                            propertyValues.in(propertyValuesEntry.getValue()));
+
+                    subquery.select(productSubRoot);
+
+                    andPredicates.add(criteriaBuilder.exists(subquery));
+                }
+            }
+        }
+
+        criteriaQuery.where(andPredicates.toArray(new Predicate[andPredicates.size()]));
 
         return entityManager.createQuery(criteriaQuery).getResultList();
     }
 
     @UnitOfWork
     public List<Object> countPropertyValuesByCategory(Category category, Property property,
-                                                      Map<Property,List<PropertyValue>> propertyValueNamesFilter) {
+                                                      Map<Property, Set<PropertyValue>> propertyValuesFilter) {
 
         EntityManager entityManager = entityManagerProvider.get();
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
@@ -65,7 +90,7 @@ public class ProductDao extends BaseDao<Product> {
         final Join<Product, PropertyValue> propertyValues = productRoot.join("propertyValues");
         final Join<PropertyValue, Property> propertyRoot = propertyValues.join("property");
 
-        final ArrayList<Predicate> andPredicates = new ArrayList<>();
+        final List<Predicate> andPredicates = new ArrayList<>();
 
         //category filter
         andPredicates.add(criteriaBuilder.equal(productRoot.get("category"), category));
@@ -77,9 +102,9 @@ public class ProductDao extends BaseDao<Product> {
         final List<PropertyValue> propertyValuesFlat = new ArrayList<>();
 
         //property values filter excluding speicfied property
-        if (propertyValueNamesFilter != null) {
-            for (Map.Entry<Property, List<PropertyValue>> propertyValuesEntry : propertyValueNamesFilter.entrySet()) {
-                if(!propertyValuesEntry.getKey().equals(property) && propertyValuesEntry.getValue().size()>0) {
+        if (propertyValuesFilter != null) {
+            for (Map.Entry<Property, Set<PropertyValue>> propertyValuesEntry : propertyValuesFilter.entrySet()) {
+                if (!propertyValuesEntry.getKey().equals(property) && propertyValuesEntry.getValue().size() > 0) {
 
                     final Subquery<Product> subquery = criteriaQuery.subquery(Product.class);
                     final Root<Product> productSubRoot = subquery.from(Product.class);
@@ -113,5 +138,9 @@ public class ProductDao extends BaseDao<Product> {
         criteriaQuery.multiselect(propertyValues, criteriaBuilder.count(productRoot));
 
         return entityManager.createQuery(criteriaQuery).getResultList();
+    }
+
+    private void addPropertyValuesFilter(List<Predicate> predicates, Map<Property, List<PropertyValue>> propertyValuesFilter) {
+
     }
 }

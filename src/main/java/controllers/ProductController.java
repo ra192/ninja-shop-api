@@ -28,50 +28,15 @@ class PropertyValueDoesntExist extends Throwable {
 @FilterWith(CorsFilter.class)
 public class ProductController {
 
-    public static class PropertiesFilter {
-        public List<String> propertyValues;
-    }
-
-    public static class PropertiesResult {
-        public Set<PropertyResultItem> data;
-        public List<PropertyDto> selectedProperties;
-
-        public PropertiesResult(Set<PropertyResultItem> data, List<PropertyDto> selectedProperties) {
-            this.data = data;
-            this.selectedProperties = selectedProperties;
-        }
-    }
-
-    public static class PropertyResultItem extends PropertyDto {
-
-        public Boolean isAdditional;
-
-        public PropertyResultItem(Property property, Boolean isAdditional) {
-            super(property);
-            this.isAdditional = isAdditional;
-        }
-    }
-
-    public static class PropertyValueResultItem extends PropertyValueDto {
-        public Long count;
-
-        public PropertyValueResultItem(PropertyValue propertyValue, Long count) {
-            super(propertyValue);
-            this.count = count;
-        }
-    }
-
     @Inject
     ProductDao productDao;
-
     @Inject
     CategoryDao categoryDao;
-
     @Inject
     PropertyDao propertyDao;
 
     @UnitOfWork
-    public Result products(@PathParam("categoryName") String categoryName,PropertiesFilter propertiesFilter) {
+    public Result products(@PathParam("categoryName") String categoryName, PropertiesFilter propertiesFilter) {
 
         Category category = categoryDao.getByName(categoryName);
 
@@ -88,7 +53,7 @@ public class ProductController {
 
         final List<ProductDto> result = new ArrayList<>();
 
-        for (Product product : productDao.listByCategory(category,propertyValuesFilterMap)) {
+        for (Product product : productDao.listByCategory(category, propertyValuesFilterMap)) {
             result.add(new ProductDto(product));
         }
 
@@ -136,17 +101,18 @@ public class ProductController {
         sortedResult.addAll(propertyValues);
 
         // get additional property values count excluding property items from filter
-        for (Map.Entry<Property,Set<PropertyValue>> propertyValueEntry:propertyValuesFilterMap.entrySet()) {
+        for (Map.Entry<Property, Set<PropertyValue>> propertyValueEntry : propertyValuesFilterMap.entrySet()) {
 
             if (propertyValueEntry.getValue().size() > 0) {
-                final PropertyResultItem addPropertyValuesItem = getPropertyValuesCount(category, propertyValueEntry.getKey(), propertyValuesFilterMap, true).get(0);
-                sortedResult.add(addPropertyValuesItem);
+                final List<PropertyResultItem> addPropertyValuesItem = getPropertyValuesCount(category, propertyValueEntry.getKey(), propertyValuesFilterMap, true);
+                if (addPropertyValuesItem.size() > 0)
+                    sortedResult.add(addPropertyValuesItem.get(0));
             }
         }
 
         final List<PropertyDto> selectedProperties = getSelectedProperties(propertyValuesFilterMap);
 
-        return Results.json().render(new PropertiesResult(sortedResult,selectedProperties));
+        return Results.json().render(new PropertiesResult(sortedResult, selectedProperties));
     }
 
     private List<PropertyResultItem> getPropertyValuesCount(Category category, Property property, Map<Property, Set<PropertyValue>> propertiesFilter, Boolean isAdditional) {
@@ -173,7 +139,7 @@ public class ProductController {
         return result;
     }
 
-    private Map<Property,Set<PropertyValue>> getPropertiesFilter(List<String>propertyValueNames) throws PropertyValueDoesntExist {
+    private Map<Property, Set<PropertyValue>> getPropertiesFilter(List<String> propertyValueNames) throws PropertyValueDoesntExist {
         final Map<Property, Set<PropertyValue>> result = new TreeMap<>(new Comparator<Property>() {
             @Override
             public int compare(Property o1, Property o2) {
@@ -207,16 +173,49 @@ public class ProductController {
     }
 
     private List<PropertyDto> getSelectedProperties(Map<Property, Set<PropertyValue>> propertiesFilter) {
-        final List<PropertyDto> result=new ArrayList<>();
+        final List<PropertyDto> result = new ArrayList<>();
 
-        for(Map.Entry<Property,Set<PropertyValue>> propertiesFilterEntry:propertiesFilter.entrySet()) {
+        for (Map.Entry<Property, Set<PropertyValue>> propertiesFilterEntry : propertiesFilter.entrySet()) {
             final PropertyDto propertyDto = new PropertyDto(propertiesFilterEntry.getKey());
-            for(PropertyValue propertyValue:propertiesFilterEntry.getValue()) {
+            for (PropertyValue propertyValue : propertiesFilterEntry.getValue()) {
                 propertyDto.getPropertyValues().add(new PropertyValueDto(propertyValue));
             }
             result.add(propertyDto);
         }
 
         return result;
+    }
+
+    public static class PropertiesFilter {
+        public List<String> propertyValues;
+    }
+
+    public static class PropertiesResult {
+        public Set<PropertyResultItem> data;
+        public List<PropertyDto> selectedProperties;
+
+        public PropertiesResult(Set<PropertyResultItem> data, List<PropertyDto> selectedProperties) {
+            this.data = data;
+            this.selectedProperties = selectedProperties;
+        }
+    }
+
+    public static class PropertyResultItem extends PropertyDto {
+
+        public Boolean isAdditional;
+
+        public PropertyResultItem(Property property, Boolean isAdditional) {
+            super(property);
+            this.isAdditional = isAdditional;
+        }
+    }
+
+    public static class PropertyValueResultItem extends PropertyValueDto {
+        public Long count;
+
+        public PropertyValueResultItem(PropertyValue propertyValue, Long count) {
+            super(propertyValue);
+            this.count = count;
+        }
     }
 }

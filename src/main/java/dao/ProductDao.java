@@ -9,6 +9,7 @@ import ninja.jpa.UnitOfWork;
 
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
+import javax.persistence.TypedQuery;
 import javax.persistence.criteria.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,7 +44,8 @@ public class ProductDao extends BaseDao<Product> {
     }
 
     @UnitOfWork
-    public List<Product> listByCategory(Category category, Map<Property, Set<PropertyValue>> propertyValuesFilter) {
+    public List<Product> listByCategory(Category category, Map<Property, Set<PropertyValue>> propertyValuesFilter,
+                                        String orderPropertyName, Boolean isOrderAsk, Integer first, Integer max) {
         EntityManager entityManager = entityManagerProvider.get();
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
 
@@ -75,7 +77,23 @@ public class ProductDao extends BaseDao<Product> {
 
         criteriaQuery.where(andPredicates.toArray(new Predicate[andPredicates.size()]));
 
-        return entityManager.createQuery(criteriaQuery).getResultList();
+        //add order
+        Order order;
+        if (isOrderAsk) {
+            order = criteriaBuilder.asc(productRoot.get(orderPropertyName));
+        } else {
+            order = criteriaBuilder.desc(productRoot.get(orderPropertyName));
+        }
+        criteriaQuery.orderBy(order);
+
+        final TypedQuery<Product> query = entityManager.createQuery(criteriaQuery);
+
+        //set limits if specified
+        query.setFirstResult(first);
+        if(max!=null)
+            query.setMaxResults(max);
+
+        return query.getResultList();
     }
 
     @UnitOfWork

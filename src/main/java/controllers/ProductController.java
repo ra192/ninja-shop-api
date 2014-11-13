@@ -36,7 +36,7 @@ public class ProductController {
     PropertyDao propertyDao;
 
     @UnitOfWork
-    public Result products(@PathParam("categoryName") String categoryName, PropertiesFilter propertiesFilter) {
+    public Result products(@PathParam("categoryName") String categoryName, ProductFilter productFilter) {
 
         Category category = categoryDao.getByName(categoryName);
 
@@ -46,14 +46,15 @@ public class ProductController {
 
         final Map<Property, Set<PropertyValue>> propertyValuesFilterMap;
         try {
-            propertyValuesFilterMap = getPropertiesFilter(propertiesFilter.propertyValues);
+            propertyValuesFilterMap = getPropertiesFilter(productFilter.propertyValues);
         } catch (PropertyValueDoesntExist propertyValueDoesntExist) {
             return Results.json().render("error", "property value with specified name was not found");
         }
 
         final List<ProductDto> result = new ArrayList<>();
 
-        for (Product product : productDao.listByCategory(category, propertyValuesFilterMap)) {
+        for (Product product : productDao.listByCategory(category, propertyValuesFilterMap, productFilter.orderProperty,
+                productFilter.isAsk, productFilter.first, productFilter.max)) {
             result.add(new ProductDto(product));
         }
 
@@ -188,6 +189,13 @@ public class ProductController {
 
     public static class PropertiesFilter {
         public List<String> propertyValues;
+    }
+
+    public static class ProductFilter extends PropertiesFilter {
+        public String orderProperty="displayName";
+        public Boolean isAsk=true;
+        public Integer first=0;
+        public Integer max;
     }
 
     public static class PropertiesResult {

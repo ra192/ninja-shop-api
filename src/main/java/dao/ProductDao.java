@@ -52,30 +52,7 @@ public class ProductDao extends BaseDao<Product> {
         CriteriaQuery<Product> criteriaQuery = criteriaBuilder.createQuery(entityClass);
         Root<Product> productRoot = criteriaQuery.from(entityClass);
 
-        final List<Predicate> andPredicates = new ArrayList<>();
-
-        //category filter
-        andPredicates.add(criteriaBuilder.equal(productRoot.get("category"), category));
-
-        //property values filter if specified
-        if (propertyValuesFilter != null && !propertyValuesFilter.isEmpty()) {
-            for (Map.Entry<Property, Set<PropertyValue>> propertyValuesEntry : propertyValuesFilter.entrySet()) {
-                if (propertyValuesEntry.getValue().size() > 0) {
-                    final Subquery<Product> subquery = criteriaQuery.subquery(Product.class);
-                    final Root<Product> productSubRoot = subquery.from(Product.class);
-                    final Join<Product, PropertyValue> propertyValues = productSubRoot.join("propertyValues");
-
-                    subquery.where(criteriaBuilder.and(criteriaBuilder.equal(productRoot, productSubRoot)),
-                            propertyValues.in(propertyValuesEntry.getValue()));
-
-                    subquery.select(productSubRoot);
-
-                    andPredicates.add(criteriaBuilder.exists(subquery));
-                }
-            }
-        }
-
-        criteriaQuery.where(andPredicates.toArray(new Predicate[andPredicates.size()]));
+        addCategoryAndProperyValuesFilter(category, propertyValuesFilter, criteriaBuilder, criteriaQuery, productRoot);
 
         //add order
         Order order;
@@ -90,10 +67,25 @@ public class ProductDao extends BaseDao<Product> {
 
         //set limits if specified
         query.setFirstResult(first);
-        if(max!=null)
+        if (max != null)
             query.setMaxResults(max);
 
         return query.getResultList();
+    }
+
+    @UnitOfWork
+    public Long countByCategory(Category category, Map<Property, Set<PropertyValue>> propertyValuesFilter) {
+        EntityManager entityManager = entityManagerProvider.get();
+        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+
+        CriteriaQuery<Object> criteriaQuery = criteriaBuilder.createQuery(Object.class);
+        Root<Product> productRoot = criteriaQuery.from(entityClass);
+
+        addCategoryAndProperyValuesFilter(category, propertyValuesFilter, criteriaBuilder, criteriaQuery, productRoot);
+
+        criteriaQuery.select(criteriaBuilder.count(productRoot));
+
+        return (Long) entityManager.createQuery(criteriaQuery).getSingleResult();
     }
 
     @UnitOfWork
@@ -123,19 +115,8 @@ public class ProductDao extends BaseDao<Product> {
         if (propertyValuesFilter != null) {
             for (Map.Entry<Property, Set<PropertyValue>> propertyValuesEntry : propertyValuesFilter.entrySet()) {
                 if (!propertyValuesEntry.getKey().equals(property) && propertyValuesEntry.getValue().size() > 0) {
-
-                    final Subquery<Product> subquery = criteriaQuery.subquery(Product.class);
-                    final Root<Product> productSubRoot = subquery.from(Product.class);
-                    final Join<Product, PropertyValue> subPropertyValues = productSubRoot.join("propertyValues");
-
-                    propertyValuesFlat.addAll(propertyValuesEntry.getValue());
-
-                    subquery.where(criteriaBuilder.and(criteriaBuilder.equal(productRoot, productSubRoot),
-                            subPropertyValues.in(propertyValuesEntry.getValue())));
-
-                    subquery.select(productSubRoot);
-
-                    andPredicates.add(criteriaBuilder.exists(subquery));
+                    addPropertyValuesSubquery(criteriaBuilder, criteriaQuery, productRoot, andPredicates,
+                            propertyValuesEntry.getValue());
                 }
 
                 propertyValuesFlat.addAll(propertyValuesEntry.getValue());
@@ -158,7 +139,39 @@ public class ProductDao extends BaseDao<Product> {
         return entityManager.createQuery(criteriaQuery).getResultList();
     }
 
-    private void addPropertyValuesFilter(List<Predicate> predicates, Map<Property, List<PropertyValue>> propertyValuesFilter) {
+    private void addPropertyValuesSubquery(CriteriaBuilder criteriaBuilder, CriteriaQuery<?> criteriaQuery,
+                                           Root<Product> productRoot, List<Predicate> andPredicates,
+                                           Set<PropertyValue> propertyValues) {
 
+        final Subquery<Product> subquery = criteriaQuery.subquery(Product.class);
+        final Root<Product> productSubRoot = subquery.from(Product.class);
+        final Join<Product, PropertyValue> subPropertyValues = productSubRoot.join("propertyValues");
+
+        subquery.where(criteriaBuilder.and(criteriaBuilder.equal(productRoot, productSubRoot),
+                subPropertyValues.in(propertyValues)));
+
+        subquery.select(productSubRoot);
+
+        andPredicates.add(criteriaBuilder.exists(subquery));
     }
+
+    private void addCategoryAndProperyValuesFilter(Category category, Map<Property, Set<PropertyValue>> propertyValuesFilter, CriteriaBuilder criteriaBuilder, CriteriaQuery<?> criteriaQuery, Root<Product> productRoot) {
+        final List<Predicate> andPredicates = new ArrayList<>();
+
+        //category filter
+        andPredicates.add(criteriaBuilder.equal(productRoot.get("category"), category));
+
+        //property values filter if specified
+        if (propertyValuesFilter != null && !propertyValuesFilter.isEmpty()) {
+            for (Map.Entry<Property, Set<PropertyValue>> propertyValuesEntry : propertyValuesFilter.entrySet()) {
+                if (propertyValuesEntry.getValue().size() > 0) {
+                    addPropertyValuesSubquery(criteriaBuilder, criteriaQuery, productRoot, andPredicates,
+                            propertyValuesEntry.getValue());
+                }
+            }
+        }
+
+        criteriaQuery.where(andPredicates.toArray(new Predicate[andPredicates.size()]));
+    }
+
 }

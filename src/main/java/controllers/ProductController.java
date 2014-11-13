@@ -58,7 +58,9 @@ public class ProductController {
             result.add(new ProductDto(product));
         }
 
-        return Results.json().render("data", result);
+        final Long count = productDao.countByCategory(category, propertyValuesFilterMap);
+
+        return Results.json().render(new ProductResult(result,count));
     }
 
     @UnitOfWork
@@ -196,6 +198,16 @@ public class ProductController {
         public Boolean isAsk=true;
         public Integer first=0;
         public Integer max;
+    }
+
+    public static class ProductResult {
+        public List<ProductDto>data;
+        public Long count;
+
+        public ProductResult(List<ProductDto> data, Long count) {
+            this.data = data;
+            this.count = count;
+        }
     }
 
     public static class PropertiesResult {

@@ -54,7 +54,7 @@ public class ProductController {
         final List<ProductDto> result = new ArrayList<>();
 
         for (Product product : productDao.listByCategory(category, propertyValuesFilterMap, productFilter.orderProperty,
-                productFilter.isAsk, productFilter.first, productFilter.max)) {
+                productFilter.isAsc, productFilter.first, productFilter.max)) {
             result.add(new ProductDto(product));
         }
 
@@ -195,7 +195,7 @@ public class ProductController {
 
     public static class ProductFilter extends PropertiesFilter {
         public String orderProperty="displayName";
-        public Boolean isAsk=true;
+        public Boolean isAsc =true;
         public Integer first=0;
         public Integer max;
     }

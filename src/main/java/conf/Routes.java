@@ -19,7 +19,6 @@ package conf;
 
 import controllers.*;
 import ninja.AssetsController;
-import ninja.Results;
 import ninja.Router;
 import ninja.application.ApplicationRoutes;
 
@@ -37,6 +36,8 @@ public class Routes implements ApplicationRoutes {
         router.POST().route("/productsProperties/{categoryName}.json").with(ProductController.class,"properties");
 
         router.GET().route("/categories.json").with(CategoryController.class,"categories");
+
+        router.POST().route("/users/add.json").with(UserController.class,"addUser");
 
         router.POST().route("/tools/import.json").with(ToolsController.class,"importData");
  

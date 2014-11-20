@@ -23,12 +23,10 @@ public abstract class BaseDao<T> {
         this.entityClass=entityClass;
     }
 
-    @UnitOfWork
     public T get(Long id) {
         return entityManagerProvider.get().find(entityClass,id);
     }
 
-    @UnitOfWork
     public List<T> list() {
         EntityManager entityManager = entityManagerProvider.get();
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
@@ -39,7 +37,6 @@ public abstract class BaseDao<T> {
         return entityManager.createQuery(criteriaQuery).getResultList();
     }
 
-    @Transactional
     public void save(T entity) {
         entityManagerProvider.get().persist(entity);
     }

@@ -23,7 +23,6 @@ public class PropertyDao extends BaseDao<Property> {
         super(Property.class);
     }
 
-    @UnitOfWork
     public Property getByName(String name) {
         EntityManager entityManager = entityManagerProvider.get();
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
@@ -39,7 +38,6 @@ public class PropertyDao extends BaseDao<Property> {
         }
     }
 
-    @UnitOfWork
     public PropertyValue getPropertyValueByName(String name) {
         EntityManager entityManager = entityManagerProvider.get();
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
@@ -55,7 +53,6 @@ public class PropertyDao extends BaseDao<Property> {
         }
     }
 
-    @Transactional
     public void savePropertyValue(PropertyValue propertyValue) {
         entityManagerProvider.get().persist(propertyValue);
     }

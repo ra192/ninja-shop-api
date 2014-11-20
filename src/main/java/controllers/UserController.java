@@ -3,6 +3,8 @@ package controllers;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
+import com.google.inject.persist.Transactional;
 import dao.UserDao;
 import dto.UserDto;
 import filters.CorsFilter;
@@ -25,6 +27,7 @@ import java.util.Set;
 /**
  * Created by yakov_000 on 17.11.2014.
  */
+@Singleton
 @FilterWith(CorsFilter.class)
 public class UserController {
     Logger logger= LoggerFactory.getLogger(UserController.class);
@@ -39,6 +42,7 @@ public class UserController {
         public String last_name;
     }
 
+    @Transactional
     public Result addUser(UserDto userDto) {
         final FbUser fbUser = getUserInfoFromFb(userDto.getAccessToken());
 

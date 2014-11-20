@@ -4,6 +4,7 @@ import annotations.AllowedRoles;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.google.inject.persist.Transactional;
 import dao.CategoryDao;
 import dao.ProductDao;
 import dao.PropertyDao;
@@ -44,6 +45,7 @@ public class ToolsController {
     ProductDao productDao;
 
     @AllowedRoles(roles = {"ROLE_ADMIN"})
+    @Transactional
     public Result importData(Context context) {
 
         try {

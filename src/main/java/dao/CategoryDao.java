@@ -1,8 +1,7 @@
 package dao;
 
+import com.google.inject.Singleton;
 import model.Category;
-import model.Property;
-import ninja.jpa.UnitOfWork;
 
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
@@ -14,13 +13,13 @@ import java.util.List;
 /**
  * Created by yakov_000 on 25.06.2014.
  */
+@Singleton
 public class CategoryDao extends BaseDao<Category> {
 
     public CategoryDao() {
         super(Category.class);
     }
 
-    @UnitOfWork
     public Category getByName(String name) {
         EntityManager entityManager = entityManagerProvider.get();
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
@@ -36,7 +35,6 @@ public class CategoryDao extends BaseDao<Category> {
         }
     }
 
-    @UnitOfWork
     public List<Category>listRoots() {
         EntityManager entityManager = entityManagerProvider.get();
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
@@ -51,7 +49,6 @@ public class CategoryDao extends BaseDao<Category> {
         return entityManager.createQuery(criteriaQuery).getResultList();
     }
 
-    @UnitOfWork
     public List<Category>listByParent(Category parent) {
         EntityManager entityManager = entityManagerProvider.get();
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();

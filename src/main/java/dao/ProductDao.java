@@ -27,7 +27,6 @@ public class ProductDao extends BaseDao<Product> {
         super(Product.class);
     }
 
-    @UnitOfWork
     public Product getByCode(String code) {
         EntityManager entityManager = entityManagerProvider.get();
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
@@ -43,7 +42,6 @@ public class ProductDao extends BaseDao<Product> {
         }
     }
 
-    @UnitOfWork
     public List<Product> listByCategory(Category category, Map<Property, Set<PropertyValue>> propertyValuesFilter,
                                         String orderPropertyName, Boolean isOrderAsk, Integer first, Integer max) {
         EntityManager entityManager = entityManagerProvider.get();
@@ -73,7 +71,6 @@ public class ProductDao extends BaseDao<Product> {
         return query.getResultList();
     }
 
-    @UnitOfWork
     public Long countByCategory(Category category, Map<Property, Set<PropertyValue>> propertyValuesFilter) {
         EntityManager entityManager = entityManagerProvider.get();
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
@@ -88,7 +85,6 @@ public class ProductDao extends BaseDao<Product> {
         return (Long) entityManager.createQuery(criteriaQuery).getSingleResult();
     }
 
-    @UnitOfWork
     public List<Object> countPropertyValuesByCategory(Category category, Property property,
                                                       Map<Property, Set<PropertyValue>> propertyValuesFilter) {
 

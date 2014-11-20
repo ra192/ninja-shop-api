@@ -12,6 +12,6 @@ import ninja.Results;
 public class OptionsRequestController {
 
     public Result options() {
-        return Results.json().render("options").addHeader("Access-Control-Allow-Headers","Content-Type, x-xsrf-token");
+        return Results.json().render("options").addHeader("Access-Control-Allow-Headers","Content-Type, x-xsrf-token, accessToken");
     }
 }

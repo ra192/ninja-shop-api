@@ -1,5 +1,6 @@
 package controllers;
 
+import annotations.AllowedRoles;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -8,6 +9,7 @@ import dao.ProductDao;
 import dao.PropertyDao;
 import dto.*;
 import filters.CorsFilter;
+import filters.SecurityFilter;
 import model.Category;
 import model.Product;
 import model.Property;
@@ -27,7 +29,7 @@ import java.util.HashSet;
  */
 
 @Singleton
-@FilterWith(CorsFilter.class)
+@FilterWith({CorsFilter.class, SecurityFilter.class})
 public class ToolsController {
 
     Logger logger = LoggerFactory.getLogger(ToolsController.class);
@@ -41,6 +43,7 @@ public class ToolsController {
     @Inject
     ProductDao productDao;
 
+    @AllowedRoles(roles = {"ROLE_ADMIN"})
     public Result importData(Context context) {
 
         try {

@@ -33,4 +33,19 @@ public class UserDao extends BaseDao<User> {
             return null;
         }
     }
+
+    public User getByAccessToken(String accessToken) {
+        final EntityManager entityManager = entityManagerProvider.get();
+        final CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+
+        final CriteriaQuery<User> criteriaQuery = criteriaBuilder.createQuery(entityClass);
+        final Root<User> userRoot = criteriaQuery.from(entityClass);
+        criteriaQuery.where(criteriaBuilder.equal(userRoot.get("accessToken"),accessToken));
+
+        try {
+            return entityManager.createQuery(criteriaQuery).getSingleResult();
+        } catch (NoResultException e) {
+            return null;
+        }
+    }
 }

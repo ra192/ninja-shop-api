@@ -5,7 +5,6 @@ import model.Category;
 import model.Product;
 import model.Property;
 import model.PropertyValue;
-import ninja.jpa.UnitOfWork;
 
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;

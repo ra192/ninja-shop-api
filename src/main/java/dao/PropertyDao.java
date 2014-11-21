@@ -1,10 +1,8 @@
 package dao;
 
 import com.google.inject.Singleton;
-import com.google.inject.persist.Transactional;
 import model.Property;
 import model.PropertyValue;
-import ninja.jpa.UnitOfWork;
 
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;

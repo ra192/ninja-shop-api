@@ -2,6 +2,7 @@ package controllers;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.google.inject.persist.Transactional;
 import dao.CategoryDao;
 import dao.ProductDao;
 import dao.PropertyDao;
@@ -16,7 +17,6 @@ import model.PropertyValue;
 import ninja.FilterWith;
 import ninja.Result;
 import ninja.Results;
-import ninja.jpa.UnitOfWork;
 import ninja.params.PathParam;
 
 import java.util.*;
@@ -35,7 +35,7 @@ public class ProductController {
     @Inject
     PropertyDao propertyDao;
 
-    @UnitOfWork
+    @Transactional
     public Result products(@PathParam("categoryName") String categoryName, ProductFilter productFilter) {
 
         Category category = categoryDao.getByName(categoryName);
@@ -60,10 +60,10 @@ public class ProductController {
 
         final Long count = productDao.countByCategory(category, propertyValuesFilterMap);
 
-        return Results.json().render(new ProductResult(result,count));
+        return Results.json().render(new ProductResult(result, count));
     }
 
-    @UnitOfWork
+    @Transactional
     public Result product(@PathParam("id") Long id) {
 
         Product product = productDao.get(id);
@@ -74,8 +74,9 @@ public class ProductController {
             return Results.json().render("error", "product with specified id was not found");
     }
 
-    @UnitOfWork
+    @Transactional
     public Result properties(@PathParam("categoryName") String categoryName, PropertiesFilter propertiesFilter) {
+
 
         Category category = categoryDao.getByName(categoryName);
 
@@ -194,14 +195,14 @@ public class ProductController {
     }
 
     public static class ProductFilter extends PropertiesFilter {
-        public String orderProperty="displayName";
-        public Boolean isAsc =true;
-        public Integer first=0;
+        public String orderProperty = "displayName";
+        public Boolean isAsc = true;
+        public Integer first = 0;
         public Integer max;
     }
 
     public static class ProductResult {
-        public List<ProductDto>data;
+        public List<ProductDto> data;
         public Long count;
 
         public ProductResult(List<ProductDto> data, Long count) {

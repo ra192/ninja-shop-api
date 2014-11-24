@@ -16,42 +16,20 @@
 
 package conf;
 
-
-import controllers.*;
-import ninja.AssetsController;
+import com.google.inject.Inject;
 import ninja.Router;
 import ninja.application.ApplicationRoutes;
+import ninja.jaxy.JaxyRoutes;
 
 public class Routes implements ApplicationRoutes {
 
+    @Inject
+    JaxyRoutes jaxyRoutes;
+
     @Override
     public void init(Router router) {  
-        
-        router.GET().route("/").with(ApplicationController.class, "index");
-        router.GET().route("/hello_world.json").with(ApplicationController.class, "helloWorldJson");
 
-        router.POST().route("/products/{categoryName}.json").with(ProductController.class,"products");
-        router.GET().route("/product/{id}.json").with(ProductController.class,"product");
-
-        router.POST().route("/productsProperties/{categoryName}.json").with(ProductController.class,"properties");
-
-        router.GET().route("/categories.json").with(CategoryController.class,"categories");
-
-        router.POST().route("/users/add.json").with(UserController.class,"addUser");
-
-        router.POST().route("/tools/import.json").with(ToolsController.class,"importData");
-
-        ///////////////////////////////////////////////////////////////////////
-        // Assets (pictures / javascript)
-        ///////////////////////////////////////////////////////////////////////    
-        router.GET().route("/assets/webjars/{fileName: .*}").with(AssetsController.class, "serveWebJars");
-        router.GET().route("/assets/{fileName: .*}").with(AssetsController.class, "serveStatic");
-        
-        ///////////////////////////////////////////////////////////////////////
-        // Index / Catchall shows index page
-        ///////////////////////////////////////////////////////////////////////
-        router.GET().route("/.*").with(ApplicationController.class, "index");
-        router.OPTIONS().route("/.*").with(OptionsRequestController.class,"options");
+        jaxyRoutes.init(router);
     }
 
 }

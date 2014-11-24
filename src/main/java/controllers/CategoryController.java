@@ -10,6 +10,7 @@ import model.Category;
 import ninja.FilterWith;
 import ninja.Result;
 import ninja.Results;
+import ninja.jaxy.Path;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,12 +21,14 @@ import java.util.List;
 
 @Singleton
 @FilterWith(CorsFilter.class)
+@Path("/")
 public class CategoryController {
 
     @Inject
     CategoryDao categoryDao;
 
     @Transactional
+    @Path("categories.json")
     public Result categories() {
 
         final List<CategoryWithChildrenDto> result = new ArrayList<>();

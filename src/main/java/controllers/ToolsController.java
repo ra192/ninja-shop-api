@@ -19,6 +19,8 @@ import ninja.Context;
 import ninja.FilterWith;
 import ninja.Result;
 import ninja.Results;
+import ninja.jaxy.POST;
+import ninja.jaxy.Path;
 import org.apache.commons.fileupload.FileItemStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +33,7 @@ import java.util.HashSet;
 
 @Singleton
 @FilterWith({CorsFilter.class, SecurityFilter.class})
+@Path("/tools")
 public class ToolsController {
 
     Logger logger = LoggerFactory.getLogger(ToolsController.class);
@@ -46,6 +49,8 @@ public class ToolsController {
 
     @AllowedRoles(roles = {"ROLE_ADMIN"})
     @Transactional
+    @Path("/import.json")
+    @POST
     public Result importData(Context context) {
 
         try {

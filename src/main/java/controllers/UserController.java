@@ -12,6 +12,8 @@ import model.User;
 import ninja.FilterWith;
 import ninja.Result;
 import ninja.Results;
+import ninja.jaxy.POST;
+import ninja.jaxy.Path;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -29,6 +31,7 @@ import java.util.Set;
  */
 @Singleton
 @FilterWith(CorsFilter.class)
+@Path("/users")
 public class UserController {
     Logger logger= LoggerFactory.getLogger(UserController.class);
 
@@ -43,6 +46,8 @@ public class UserController {
     }
 
     @Transactional
+    @Path("/add.json")
+    @POST
     public Result addUser(UserDto userDto) {
         final FbUser fbUser = getUserInfoFromFb(userDto.getAccessToken());
 

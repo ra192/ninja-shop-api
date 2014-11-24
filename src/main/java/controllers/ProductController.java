@@ -17,6 +17,8 @@ import model.PropertyValue;
 import ninja.FilterWith;
 import ninja.Result;
 import ninja.Results;
+import ninja.jaxy.POST;
+import ninja.jaxy.Path;
 import ninja.params.PathParam;
 
 import java.util.*;
@@ -26,6 +28,7 @@ class PropertyValueDoesntExist extends Throwable {
 
 @Singleton
 @FilterWith(CorsFilter.class)
+@Path("/")
 public class ProductController {
 
     @Inject
@@ -36,6 +39,8 @@ public class ProductController {
     PropertyDao propertyDao;
 
     @Transactional
+    @Path("products/{categoryName}.json")
+    @POST
     public Result products(@PathParam("categoryName") String categoryName, ProductFilter productFilter) {
 
         Category category = categoryDao.getByName(categoryName);
@@ -64,6 +69,7 @@ public class ProductController {
     }
 
     @Transactional
+    @Path("product/{id}.json")
     public Result product(@PathParam("id") Long id) {
 
         Product product = productDao.get(id);
@@ -75,6 +81,8 @@ public class ProductController {
     }
 
     @Transactional
+    @Path("productsProperties/{categoryName}.json")
+    @POST
     public Result properties(@PathParam("categoryName") String categoryName, PropertiesFilter propertiesFilter) {
 
 

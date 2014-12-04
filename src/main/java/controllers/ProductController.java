@@ -19,6 +19,7 @@ import ninja.Result;
 import ninja.Results;
 import ninja.jaxy.POST;
 import ninja.jaxy.Path;
+import ninja.params.Param;
 import ninja.params.PathParam;
 
 import java.util.*;
@@ -125,6 +126,18 @@ public class ProductController {
         final List<PropertyDto> selectedProperties = getSelectedProperties(propertyValuesFilterMap);
 
         return Results.json().render(new PropertiesResult(sortedResult, selectedProperties));
+    }
+
+    @Transactional
+    @Path("search")
+    public Result search(@Param("q")String query) {
+
+        final List<ProductDto>result=new ArrayList<>();
+        for (Product product:productDao.search(query)) {
+            result.add(new ProductDto(product));
+        }
+
+        return Results.json().render("data",result);
     }
 
     private List<PropertyResultItem> getPropertyValuesCount(Category category, Property property, Map<Property, Set<PropertyValue>> propertiesFilter, Boolean isAdditional) {

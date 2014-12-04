@@ -1,6 +1,7 @@
 package model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.hibernate.search.annotations.Field;
 
 import javax.persistence.*;
 
@@ -33,6 +34,7 @@ public class PropertyValue {
         this.name = name;
     }
 
+    @Field
     public String getDisplayName() {
         return displayName;
     }

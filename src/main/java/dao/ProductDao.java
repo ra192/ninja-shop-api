@@ -5,11 +5,14 @@ import model.Category;
 import model.Product;
 import model.Property;
 import model.PropertyValue;
+import org.hibernate.search.jpa.FullTextEntityManager;
+import org.hibernate.search.query.dsl.QueryBuilder;
 
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.*;
+import java.awt.print.Book;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -132,6 +135,28 @@ public class ProductDao extends BaseDao<Product> {
         criteriaQuery.multiselect(propertyValues, criteriaBuilder.count(productRoot));
 
         return entityManager.createQuery(criteriaQuery).getResultList();
+    }
+
+    public List<Product> search(String queryString) {
+
+        EntityManager entityManager = entityManagerProvider.get();
+        FullTextEntityManager fullTextEntityManager =
+                org.hibernate.search.jpa.Search.getFullTextEntityManager(entityManager);
+        // create native Lucene query unsing the query DSL
+        QueryBuilder qb = fullTextEntityManager.getSearchFactory()
+                .buildQueryBuilder().forEntity(Product.class).get();
+        org.apache.lucene.search.Query query = qb
+                .keyword()
+                .onFields("displayName", "propertyValues.displayName")
+                .matching(queryString)
+                .createQuery();
+
+        // wrap Lucene query in a javax.persistence.Query
+        javax.persistence.Query persistenceQuery =
+                fullTextEntityManager.createFullTextQuery(query, Product.class);
+
+        // execute search
+        return persistenceQuery.getResultList();
     }
 
     private void addPropertyValuesSubquery(CriteriaBuilder criteriaBuilder, CriteriaQuery<?> criteriaQuery,

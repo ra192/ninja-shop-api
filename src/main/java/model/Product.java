@@ -1,5 +1,9 @@
 package model;
 
+import org.hibernate.search.annotations.Field;
+import org.hibernate.search.annotations.Indexed;
+import org.hibernate.search.annotations.IndexedEmbedded;
+
 import javax.persistence.*;
 import java.util.HashMap;
 import java.util.Map;
@@ -9,6 +13,7 @@ import java.util.Set;
  * Created by yakov_000 on 05.06.2014.
  */
 @Entity
+@Indexed
 public class Product {
     private Long id;
     private String code;
@@ -39,6 +44,7 @@ public class Product {
         this.code = code;
     }
 
+    @Field()
     public String getDisplayName() {
         return displayName;
     }
@@ -81,6 +87,7 @@ public class Product {
     }
 
     @ManyToMany
+    @IndexedEmbedded
     public Set<PropertyValue> getPropertyValues() {
         return propertyValues;
     }

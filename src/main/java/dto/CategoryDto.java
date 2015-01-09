@@ -33,4 +33,12 @@ public abstract class CategoryDto {
         name=category.getName();
         displayName=category.getDisplayName();
     }
+
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("");
+        sb.append("name='").append(name).append('\'');
+        sb.append(", displayName='").append(displayName).append('\'');
+        return sb.toString();
+    }
 }

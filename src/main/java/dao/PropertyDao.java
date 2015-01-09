@@ -9,6 +9,7 @@ import javax.persistence.NoResultException;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
+import java.util.List;
 
 /**
  * Created by yakov_000 on 24.06.2014.
@@ -49,6 +50,16 @@ public class PropertyDao extends BaseDao<Property> {
         } catch (NoResultException e) {
             return null;
         }
+    }
+
+    public List<Property> list() {
+        EntityManager entityManager = entityManagerProvider.get();
+        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+
+        CriteriaQuery<Property> criteriaQuery = criteriaBuilder.createQuery(Property.class);
+        criteriaQuery.from(Property.class);
+
+        return entityManager.createQuery(criteriaQuery).getResultList();
     }
 
     public void savePropertyValue(PropertyValue propertyValue) {

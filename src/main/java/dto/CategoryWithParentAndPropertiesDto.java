@@ -31,4 +31,14 @@ public class CategoryWithParentAndPropertiesDto extends CategoryDto {
     public void setParent(String parent) {
         this.parent = parent;
     }
+
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("CategoryWithParentAndPropertiesDto{");
+        sb.append("parent='").append(parent).append('\'');
+        sb.append(super.toString());
+        sb.append(", properties=").append(properties);
+        sb.append('}');
+        return sb.toString();
+    }
 }

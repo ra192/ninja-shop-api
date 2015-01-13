@@ -15,6 +15,9 @@ import ninja.Result;
 import ninja.Results;
 import ninja.jaxy.POST;
 import ninja.jaxy.Path;
+import ninja.params.PathParam;
+import ninja.validation.JSR303Validation;
+import ninja.validation.Validation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,11 +57,30 @@ public class CategoryController {
     }
 
     @Transactional
+    @Path("/get/{name}.json")
+    public Result getByName(@PathParam("name") String name) {
+
+        final Category category = categoryDao.getByName(name);
+
+        final CategoryWithParentAndPropertiesDto result = new CategoryWithParentAndPropertiesDto();
+
+        result.setDisplayName(category.getDisplayName());
+
+        return Results.json().render(result);
+    }
+
+    @Transactional
     @Path("/create.json")
     @POST
-    public Result create(CategoryWithParentAndPropertiesDto categoryDto) {
+    public Result create(@JSR303Validation CategoryWithParentAndPropertiesDto categoryDto, Validation validation) {
 
         logger.info("Create category method was invoked with following params: {}",categoryDto.toString());
+
+        if(validation.hasBeanViolations()) {
+            logger.error("Specified category object has violations");
+
+            return Results.json().render("error","Specified category object has violations");
+        }
 
         if(categoryDao.getByName(categoryDto.getName())!=null) {
             logger.error("Category with specified name already exists");
@@ -98,6 +120,36 @@ public class CategoryController {
         categoryDao.save(category);
 
         logger.info("Category was successfully created");
+
+        return Results.json().render("result","ok");
+    }
+
+    @Transactional
+    @Path("/update.json")
+    @POST
+    public Result update(@JSR303Validation CategoryWithParentAndPropertiesDto categoryDto, Validation validation) {
+
+        logger.info("Update category method was invoked with following params: {}",categoryDto.toString());
+
+        if(validation.hasBeanViolations()) {
+            logger.error("Specified category object has violations");
+
+            return Results.json().render("error","Specified category object has violations");
+        }
+
+        final Category category=categoryDao.getByName(categoryDto.getName());
+
+        if(category==null) {
+            logger.error("Category with specified name doesn't exist");
+
+            return Results.json().render("error","Category with specified name doesn't exist");
+        }
+
+        category.setDisplayName(categoryDto.getDisplayName());
+
+        categoryDao.save(category);
+
+        logger.info("Category was successfully updated");
 
         return Results.json().render("result","ok");
     }

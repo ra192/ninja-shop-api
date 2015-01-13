@@ -5,6 +5,8 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import model.Property;
 import model.PropertyValue;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,11 +15,14 @@ import java.util.List;
  */
 
 public class PropertyDto {
+    @NotNull
     String name;
+    @NotNull
     String displayName;
 
     @JacksonXmlElementWrapper(localName = "propertyValues")
     @JacksonXmlProperty(localName = "propertyValue")
+    @Valid
     List<PropertyValueDto> propertyValues;
 
     public PropertyDto() {
@@ -52,5 +57,15 @@ public class PropertyDto {
 
     public void setDisplayName(String displayName) {
         this.displayName = displayName;
+    }
+
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("PropertyDto{");
+        sb.append("name='").append(name).append('\'');
+        sb.append(", displayName='").append(displayName).append('\'');
+        sb.append(", propertyValues=").append(propertyValues);
+        sb.append('}');
+        return sb.toString();
     }
 }

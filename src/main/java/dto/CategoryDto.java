@@ -2,12 +2,16 @@ package dto;
 
 import model.Category;
 
+import javax.validation.constraints.NotNull;
+
 /**
  * Created by yakov_000 on 31.10.2014.
  */
 public abstract class CategoryDto {
 
+    @NotNull
     String name;
+    @NotNull
     String displayName;
 
     public String getName() {

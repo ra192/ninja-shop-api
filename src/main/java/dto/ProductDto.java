@@ -6,6 +6,7 @@ import model.Category;
 import model.Product;
 import model.PropertyValue;
 
+import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,9 +14,13 @@ import java.util.List;
  * Created by yakov_000 on 25.06.2014.
  */
 public class ProductDto {
+    @NotNull
     String code;
+    @NotNull
     String displayName;
+    @NotNull
     Double price;
+    @NotNull
     String category;
     String imageUrl;
     String description;
@@ -95,5 +100,19 @@ public class ProductDto {
 
     public void setPropertyValues(List<String> propertyValues) {
         this.propertyValues = propertyValues;
+    }
+
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("ProductDto{");
+        sb.append("code='").append(code).append('\'');
+        sb.append(", displayName='").append(displayName).append('\'');
+        sb.append(", price=").append(price);
+        sb.append(", category='").append(category).append('\'');
+        sb.append(", imageUrl='").append(imageUrl).append('\'');
+        sb.append(", description='").append(description).append('\'');
+        sb.append(", propertyValues=").append(propertyValues);
+        sb.append('}');
+        return sb.toString();
     }
 }

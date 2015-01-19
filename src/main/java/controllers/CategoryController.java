@@ -106,7 +106,7 @@ public class CategoryController {
             if(property==null) {
                 logger.error("Property with name {} doesn't exists",propertyName);
 
-                return Results.json().render("error","Parent category with specified name doesn't exists");
+                return Results.json().render("error",String.format("Property with name %s doesn't exists",propertyName));
             }
             properties.add(property);
         }

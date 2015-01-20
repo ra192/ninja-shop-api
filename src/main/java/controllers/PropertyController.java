@@ -31,7 +31,7 @@ import java.util.List;
 @Path("/properties")
 public class PropertyController {
 
-    Logger logger= LoggerFactory.getLogger(PropertyController.class);
+    Logger logger = LoggerFactory.getLogger(PropertyController.class);
 
     @Inject
     PropertyDao propertyDao;
@@ -53,13 +53,18 @@ public class PropertyController {
 
         final Property property = propertyDao.getByName(name);
 
-        if(property==null) {
+        if (property == null) {
             logger.info("Property with specified name doesn't exist");
 
-            return Results.json().render("error","Property with specified name doesn't exist");
+            return Results.json().render("error", "Property with specified name doesn't exist");
         }
 
-        return Results.json().render(new PropertyDto(property));
+        final PropertyDto result = new PropertyDto(property);
+
+        for (PropertyValue propertyValue : property.getPropertyValues())
+            result.getPropertyValues().add(new PropertyValueDto(propertyValue));
+
+        return Results.json().render(result);
     }
 
     @Transactional
@@ -67,18 +72,18 @@ public class PropertyController {
     @POST
     public Result create(@JSR303Validation PropertyDto propertyDto, Validation validation) {
 
-        logger.info("Create property method was invoked with following params {}",propertyDto.toString());
+        logger.info("Create property method was invoked with following params {}", propertyDto.toString());
 
-        if(validation.hasBeanViolations()) {
+        if (validation.hasBeanViolations()) {
             logger.error("Specified property object has violations");
 
-            return Results.json().render("error","Specified property object has violations");
+            return Results.json().render("error", "Specified property object has violations");
         }
 
-        if(propertyDao.getByName(propertyDto.getName())!=null) {
+        if (propertyDao.getByName(propertyDto.getName()) != null) {
             logger.error("Property with specified name already exists");
 
-            return Results.json().render("error","Property with specified name already exists");
+            return Results.json().render("error", "Property with specified name already exists");
         }
 
         final Property property = new Property();
@@ -89,23 +94,23 @@ public class PropertyController {
 
         logger.info("Property was created successfully");
 
-        for (PropertyValueDto propertyValueDto:propertyDto.getPropertyValues()) {
+        for (PropertyValueDto propertyValueDto : propertyDto.getPropertyValues()) {
             PropertyValue propertyValue = propertyDao.getPropertyValueByName(propertyValueDto.getName());
-            if(propertyValue!=null)
-                logger.info("Property value with {} name already exists",propertyValueDto.getName());
+            if (propertyValue != null)
+                logger.info("Property value with {} name already exists", propertyValueDto.getName());
             else {
-                propertyValue=new PropertyValue();
+                propertyValue = new PropertyValue();
                 propertyValue.setDisplayName(propertyValueDto.getDisplayName());
                 propertyValue.setName(propertyValueDto.getName());
                 propertyValue.setProperty(property);
 
                 propertyDao.savePropertyValue(propertyValue);
 
-                logger.info("Property value with {} name was created successfully",propertyValueDto.getName());
+                logger.info("Property value with {} name was created successfully", propertyValueDto.getName());
             }
         }
 
-        return Results.json().render("result","ok");
+        return Results.json().render("result", "ok");
     }
 
     @Transactional
@@ -113,20 +118,20 @@ public class PropertyController {
     @POST
     public Result update(@JSR303Validation PropertyDto propertyDto, Validation validation) {
 
-        logger.info("Update property method was invoked with following params {}",propertyDto.toString());
+        logger.info("Update property method was invoked with following params {}", propertyDto.toString());
 
-        if(validation.hasBeanViolations()) {
+        if (validation.hasBeanViolations()) {
             logger.error("Specified property object has violations");
 
-            return Results.json().render("error","Specified property object has violations");
+            return Results.json().render("error", "Specified property object has violations");
         }
 
-        final Property property=propertyDao.getByName(propertyDto.getName());
+        final Property property = propertyDao.getByName(propertyDto.getName());
 
-        if(property==null) {
+        if (property == null) {
             logger.error("Property with specified name doesn't exist");
 
-            return Results.json().render("error","Property with specified name doesn't exist");
+            return Results.json().render("error", "Property with specified name doesn't exist");
         }
 
         property.setDisplayName(propertyDto.getDisplayName());
@@ -135,6 +140,6 @@ public class PropertyController {
 
         logger.info("Property was updated successfully");
 
-        return Results.json().render("result","ok");
+        return Results.json().render("result", "ok");
     }
 }

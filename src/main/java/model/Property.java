@@ -3,6 +3,8 @@ package model;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.OneToMany;
+import java.util.Set;
 
 /**
  * Created by yakov_000 on 17.06.2014.
@@ -12,6 +14,7 @@ public class Property {
     private Long id;
     private String name;
     private String displayName;
+    private Set<PropertyValue>propertyValues;
 
     @Id
     @GeneratedValue
@@ -38,4 +41,14 @@ public class Property {
     public void setDisplayName(String displayName) {
         this.displayName = displayName;
     }
+
+    @OneToMany(mappedBy = "property")
+    public Set<PropertyValue> getPropertyValues() {
+        return propertyValues;
+    }
+
+    public void setPropertyValues(Set<PropertyValue> propertyValues) {
+        this.propertyValues = propertyValues;
+    }
+
 }

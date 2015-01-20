@@ -62,9 +62,7 @@ public class CategoryController {
 
         final Category category = categoryDao.getByName(name);
 
-        final CategoryWithParentAndPropertiesDto result = new CategoryWithParentAndPropertiesDto();
-
-        result.setDisplayName(category.getDisplayName());
+        final CategoryWithParentAndPropertiesDto result = new CategoryWithParentAndPropertiesDto(category);
 
         return Results.json().render(result);
     }

@@ -2,7 +2,10 @@ package dto;
 
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+import model.Category;
+import model.Property;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -15,6 +18,20 @@ public class CategoryWithParentAndPropertiesDto extends CategoryDto {
     @JacksonXmlElementWrapper(localName = "properties")
     @JacksonXmlProperty(localName = "property")
     List<String>properties;
+
+    public CategoryWithParentAndPropertiesDto() {
+    }
+
+    public CategoryWithParentAndPropertiesDto(Category category) {
+        super(category);
+
+        if(category.getParent()!=null)
+            parent = category.getParent().getName();
+
+        properties=new ArrayList<>();
+        for(Property property:category.getProperties())
+            properties.add(property.getName());
+    }
 
     public List<String> getProperties() {
         return properties;

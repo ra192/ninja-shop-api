@@ -76,10 +76,10 @@ public class ProductController {
     }
 
     @Transactional
-    @Path("product/{id}.json")
-    public Result product(@PathParam("id") Long id) {
+    @Path("product/{code}.json")
+    public Result product(@PathParam("code") String code) {
 
-        Product product = productDao.get(id);
+        Product product = productDao.getByCode(code);
 
         if (product != null)
             return Results.json().render(new ProductDto(product));
@@ -220,6 +220,18 @@ public class ProductController {
             logger.error("Product with specified code doesn't exist");
 
             return Results.json().render("error","Product with specified code doesn't exist");
+        }
+
+        product.getPropertyValues().clear();
+        for (String propertyValueName:productDto.getPropertyValues()) {
+            final PropertyValue propertyValue = propertyDao.getPropertyValueByName(propertyValueName);
+            if(propertyValue==null) {
+                logger.error("Property value with name {} doesn't exist",propertyValueName);
+
+                return Results.json().render("error",String.format("Property value with name %s doesn't exist",propertyValueName));
+            }
+
+            product.getPropertyValues().add(propertyValue);
         }
 
         product.setDisplayName(productDto.getDisplayName());

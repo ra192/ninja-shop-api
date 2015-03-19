@@ -1,9 +1,6 @@
 package model;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.OneToMany;
+import javax.persistence.*;
 import java.util.Set;
 
 /**
@@ -26,6 +23,7 @@ public class Property {
         this.id = id;
     }
 
+    @Column(unique = true,nullable = false)
     public String getName() {
         return name;
     }

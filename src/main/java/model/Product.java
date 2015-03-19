@@ -36,6 +36,7 @@ public class Product {
         this.id = id;
     }
 
+    @Column(unique = true,nullable = false)
     public String getCode() {
         return code;
     }

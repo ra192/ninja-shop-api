@@ -14,6 +14,7 @@ import ninja.FilterWith;
 import ninja.Result;
 import ninja.Results;
 import ninja.jaxy.POST;
+import ninja.jaxy.PUT;
 import ninja.jaxy.Path;
 import ninja.params.PathParam;
 import ninja.validation.JSR303Validation;
@@ -44,7 +45,7 @@ public class CategoryController {
     PropertyDao propertyDao;
 
     @Transactional
-    @Path(".json")
+    @Path("")
     public Result categories() {
 
         final List<CategoryWithChildrenDto> result = new ArrayList<>();
@@ -57,7 +58,7 @@ public class CategoryController {
     }
 
     @Transactional
-    @Path("/get/{name}.json")
+    @Path("/{name}")
     public Result getByName(@PathParam("name") String name) {
 
         final Category category = categoryDao.getByName(name);
@@ -68,7 +69,7 @@ public class CategoryController {
     }
 
     @Transactional
-    @Path("/create.json")
+    @Path("")
     @POST
     public Result create(@JSR303Validation CategoryWithParentAndPropertiesDto categoryDto, Validation validation) {
 
@@ -123,8 +124,8 @@ public class CategoryController {
     }
 
     @Transactional
-    @Path("/update.json")
-    @POST
+    @Path("")
+    @PUT
     public Result update(@JSR303Validation CategoryWithParentAndPropertiesDto categoryDto, Validation validation) {
 
         logger.info("Update category method was invoked with following params: {}",categoryDto.toString());

@@ -18,8 +18,10 @@ import ninja.FilterWith;
 import ninja.Result;
 import ninja.Results;
 import ninja.jaxy.POST;
+import ninja.jaxy.PUT;
 import ninja.jaxy.Path;
 import ninja.params.Param;
+import ninja.params.Params;
 import ninja.params.PathParam;
 import ninja.validation.JSR303Validation;
 import ninja.validation.Validation;
@@ -33,10 +35,10 @@ class PropertyValueDoesntExist extends Throwable {
 
 @Singleton
 @FilterWith(CorsFilter.class)
-@Path("/")
+@Path("")
 public class ProductController {
 
-    Logger logger= LoggerFactory.getLogger(ProductController.class);
+    Logger logger = LoggerFactory.getLogger(ProductController.class);
 
     @Inject
     ProductDao productDao;
@@ -46,9 +48,10 @@ public class ProductController {
     PropertyDao propertyDao;
 
     @Transactional
-    @Path("products/{categoryName}.json")
-    @POST
-    public Result products(@PathParam("categoryName") String categoryName, ProductFilter productFilter) {
+    @Path("/categories/{categoryName}/products")
+    public Result products(@PathParam("categoryName") String categoryName, @Params("propertyValues") String[] propertyValueNames,
+                           @Param("orderProperty") String orderProperty, @Param("isAsc") Boolean isAsc,
+                           @Param("first") Integer first, @Param("max") Integer max) {
 
         Category category = categoryDao.getByName(categoryName);
 
@@ -58,15 +61,16 @@ public class ProductController {
 
         final Map<Property, Set<PropertyValue>> propertyValuesFilterMap;
         try {
-            propertyValuesFilterMap = getPropertiesFilter(productFilter.propertyValues);
+            propertyValuesFilterMap = getPropertiesFilter((propertyValueNames != null) ? Arrays.asList(propertyValueNames) : new ArrayList<String>());
         } catch (PropertyValueDoesntExist propertyValueDoesntExist) {
             return Results.json().render("error", "property value with specified name was not found");
         }
 
         final List<ProductDto> result = new ArrayList<>();
 
-        for (Product product : productDao.listByCategory(category, propertyValuesFilterMap, productFilter.orderProperty,
-                productFilter.isAsc, productFilter.first, productFilter.max)) {
+        for (Product product : productDao.listByCategory(category, propertyValuesFilterMap,
+                (orderProperty != null) ? orderProperty : "displayName", (isAsc != null) ? isAsc : true,
+                (first != null) ? first : 0, max)) {
             result.add(new ProductDto(product));
         }
 
@@ -76,7 +80,7 @@ public class ProductController {
     }
 
     @Transactional
-    @Path("product/{code}.json")
+    @Path("/products/{code}")
     public Result product(@PathParam("code") String code) {
 
         Product product = productDao.getByCode(code);
@@ -88,9 +92,8 @@ public class ProductController {
     }
 
     @Transactional
-    @Path("productsProperties/{categoryName}.json")
-    @POST
-    public Result properties(@PathParam("categoryName") String categoryName, PropertiesFilter propertiesFilter) {
+    @Path("/categories/{categoryName}/products/properties")
+    public Result properties(@PathParam("categoryName") String categoryName, @Params("propertyValues") String[] propertyValueNames) {
 
 
         Category category = categoryDao.getByName(categoryName);
@@ -101,7 +104,7 @@ public class ProductController {
 
         final Map<Property, Set<PropertyValue>> propertyValuesFilterMap;
         try {
-            propertyValuesFilterMap = getPropertiesFilter(propertiesFilter.propertyValues);
+            propertyValuesFilterMap = getPropertiesFilter((propertyValueNames!=null)?Arrays.asList(propertyValueNames):new ArrayList<String>());
         } catch (PropertyValueDoesntExist propertyValueDoesntExist) {
             return Results.json().render("error", "property value with specified name was not found");
         }
@@ -135,51 +138,51 @@ public class ProductController {
     }
 
     @Transactional
-    @Path("search")
-    public Result search(@Param("q")String query) {
+    @Path("/search")
+    public Result search(@Param("q") String query) {
 
-        final List<ProductDto>result=new ArrayList<>();
-        for (Product product:productDao.search(query)) {
+        final List<ProductDto> result = new ArrayList<>();
+        for (Product product : productDao.search(query)) {
             result.add(new ProductDto(product));
         }
 
-        return Results.json().render("data",result);
+        return Results.json().render("data", result);
     }
 
     @Transactional
-    @Path("product/create.json")
+    @Path("/products")
     @POST
     public Result create(@JSR303Validation ProductDto productDto, Validation validation) {
 
         logger.info("Create product method was invoked with following params: {}", productDto.toString());
 
-        if(validation.hasBeanViolations()) {
+        if (validation.hasBeanViolations()) {
             logger.error("Specified product object has violations");
 
-            return Results.json().render("error","Specified product object has violations");
+            return Results.json().render("error", "Specified product object has violations");
         }
 
-        if(productDao.getByCode(productDto.getCode())!=null) {
+        if (productDao.getByCode(productDto.getCode()) != null) {
             logger.error("Product with specified code already exists");
 
-            return Results.json().render("error","Product with specified code already exists");
+            return Results.json().render("error", "Product with specified code already exists");
         }
 
         final Category category = categoryDao.getByName(productDto.getCategory());
-        if(category==null) {
+        if (category == null) {
             logger.error("Category with specified name doesn't exist");
 
-            return Results.json().render("error","Category with specified name doesn't exist");
+            return Results.json().render("error", "Category with specified name doesn't exist");
         }
 
 
-        Set<PropertyValue> propertyValues=new HashSet<>();
-        for (String propertyValueName:productDto.getPropertyValues()) {
+        Set<PropertyValue> propertyValues = new HashSet<>();
+        for (String propertyValueName : productDto.getPropertyValues()) {
             final PropertyValue propertyValue = propertyDao.getPropertyValueByName(propertyValueName);
-            if(propertyValue==null) {
-                logger.error("Property value with name {} doesn't exist",propertyValueName);
+            if (propertyValue == null) {
+                logger.error("Property value with name {} doesn't exist", propertyValueName);
 
-                return Results.json().render("error",String.format("Property value with name %s doesn't exist",propertyValueName));
+                return Results.json().render("error", String.format("Property value with name %s doesn't exist", propertyValueName));
             }
 
             propertyValues.add(propertyValue);
@@ -198,37 +201,37 @@ public class ProductController {
 
         logger.info("Product was created successfully");
 
-        return Results.json().render("result","ok");
+        return Results.json().render("result", "ok");
     }
 
     @Transactional
-    @Path("product/update.json")
-    @POST
+    @Path("products")
+    @PUT
     public Result update(@JSR303Validation ProductDto productDto, Validation validation) {
 
         logger.info("Update product method was invoked with following params: {}", productDto.toString());
 
-        if(validation.hasBeanViolations()) {
+        if (validation.hasBeanViolations()) {
             logger.error("Specified product object has violations");
 
-            return Results.json().render("error","Specified product object has violations");
+            return Results.json().render("error", "Specified product object has violations");
         }
 
 
         final Product product = productDao.getByCode(productDto.getCode());
-        if(product ==null) {
+        if (product == null) {
             logger.error("Product with specified code doesn't exist");
 
-            return Results.json().render("error","Product with specified code doesn't exist");
+            return Results.json().render("error", "Product with specified code doesn't exist");
         }
 
         product.getPropertyValues().clear();
-        for (String propertyValueName:productDto.getPropertyValues()) {
+        for (String propertyValueName : productDto.getPropertyValues()) {
             final PropertyValue propertyValue = propertyDao.getPropertyValueByName(propertyValueName);
-            if(propertyValue==null) {
-                logger.error("Property value with name {} doesn't exist",propertyValueName);
+            if (propertyValue == null) {
+                logger.error("Property value with name {} doesn't exist", propertyValueName);
 
-                return Results.json().render("error",String.format("Property value with name %s doesn't exist",propertyValueName));
+                return Results.json().render("error", String.format("Property value with name %s doesn't exist", propertyValueName));
             }
 
             product.getPropertyValues().add(propertyValue);
@@ -243,7 +246,7 @@ public class ProductController {
 
         logger.info("Product was updated successfully");
 
-        return Results.json().render("result","ok");
+        return Results.json().render("result", "ok");
     }
 
     private List<PropertyResultItem> getPropertyValuesCount(Category category, Property property, Map<Property, Set<PropertyValue>> propertiesFilter, Boolean isAdditional) {
@@ -315,17 +318,6 @@ public class ProductController {
         }
 
         return result;
-    }
-
-    public static class PropertiesFilter {
-        public List<String> propertyValues;
-    }
-
-    public static class ProductFilter extends PropertiesFilter {
-        public String orderProperty = "displayName";
-        public Boolean isAsc = true;
-        public Integer first = 0;
-        public Integer max;
     }
 
     public static class ProductResult {

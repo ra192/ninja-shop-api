@@ -13,6 +13,7 @@ import ninja.FilterWith;
 import ninja.Result;
 import ninja.Results;
 import ninja.jaxy.POST;
+import ninja.jaxy.PUT;
 import ninja.jaxy.Path;
 import ninja.params.PathParam;
 import ninja.validation.JSR303Validation;
@@ -37,7 +38,7 @@ public class PropertyController {
     PropertyDao propertyDao;
 
     @Transactional
-    @Path(".json")
+    @Path("")
     public Result properties() {
 
         List<PropertyDto> result = new ArrayList<>();
@@ -48,7 +49,7 @@ public class PropertyController {
     }
 
     @Transactional
-    @Path("/get/{name}.json")
+    @Path("/{name}")
     public Result get(@PathParam("name") String name) {
 
         final Property property = propertyDao.getByName(name);
@@ -68,7 +69,7 @@ public class PropertyController {
     }
 
     @Transactional
-    @Path("/create.json")
+    @Path("")
     @POST
     public Result create(@JSR303Validation PropertyDto propertyDto, Validation validation) {
 
@@ -114,8 +115,8 @@ public class PropertyController {
     }
 
     @Transactional
-    @Path("/update.json")
-    @POST
+    @Path("")
+    @PUT
     public Result update(@JSR303Validation PropertyDto propertyDto, Validation validation) {
 
         logger.info("Update property method was invoked with following params {}", propertyDto.toString());

@@ -66,8 +66,7 @@ public class ProductDao extends BaseDao<Product> {
 
         //set limits if specified
         query.setFirstResult(first);
-        if (max != null)
-            query.setMaxResults(max);
+        query.setMaxResults(max);
 
         return query.getResultList();
     }

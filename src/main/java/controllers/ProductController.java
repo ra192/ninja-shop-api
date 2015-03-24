@@ -70,7 +70,7 @@ public class ProductController {
 
         for (Product product : productDao.listByCategory(category, propertyValuesFilterMap,
                 (orderProperty != null) ? orderProperty : "displayName", (isAsc != null) ? isAsc : true,
-                (first != null) ? first : 0, max)) {
+                (first != null) ? first : 0, (max != null) ? max : 10)) {
             result.add(new ProductDto(product));
         }
 
@@ -104,7 +104,7 @@ public class ProductController {
 
         final Map<Property, Set<PropertyValue>> propertyValuesFilterMap;
         try {
-            propertyValuesFilterMap = getPropertiesFilter((propertyValueNames!=null)?Arrays.asList(propertyValueNames):new ArrayList<String>());
+            propertyValuesFilterMap = getPropertiesFilter((propertyValueNames != null) ? Arrays.asList(propertyValueNames) : new ArrayList<String>());
         } catch (PropertyValueDoesntExist propertyValueDoesntExist) {
             return Results.json().render("error", "property value with specified name was not found");
         }
